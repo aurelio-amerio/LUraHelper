@@ -33,16 +33,30 @@ end
 
 -- Export Config (includes profile name)
 function LURA:ExportConfig()
-    local sp1, _, sp2, sx, sy = LUraSummaryFrame:GetPoint()
-    local ip1, _, ip2, ix, iy = LUraInteractiveFrame:GetPoint()
+    LURA:SaveCurrentPositions()
     
     local xml = "<LUraConfig>\n"
     xml = xml .. string.format("  <profileName>%s</profileName>\n", LUraHelperDB.activeProfile)
     xml = xml .. string.format("  <markers>%s</markers>\n", table.concat(LURA.db.markers, ","))
     xml = xml .. string.format("  <locked>%s</locked>\n", tostring(LURA.db.locked))
     xml = xml .. string.format("  <hidden>%s</hidden>\n", tostring(LURA.db.hidden))
-    xml = xml .. string.format("  <summaryPos>%s,%s,%s,%s</summaryPos>\n", sp1 or "CENTER", sp2 or "CENTER", sx or 496, sy or 49)
-    xml = xml .. string.format("  <interactivePos>%s,%s,%s,%s</interactivePos>\n", ip1 or "CENTER", ip2 or "CENTER", ix or 496, iy or -22)
+    xml = xml .. string.format("  <hideInteractive>%s</hideInteractive>\n", tostring(LURA.db.hideInteractive))
+    xml = xml .. string.format("  <chatChannel>%s</chatChannel>\n", tostring(LURA.db.chatChannel))
+    xml = xml .. string.format("  <chatFontSize>%s</chatFontSize>\n", tostring(LURA.db.chatFontSize))
+    xml = xml .. string.format("  <boxSpacing>%s</boxSpacing>\n", tostring(LURA.db.boxSpacing))
+    xml = xml .. string.format("  <boxPadding>%s</boxPadding>\n", tostring(LURA.db.boxPadding))
+    xml = xml .. string.format("  <chatOffsetX>%s</chatOffsetX>\n", tostring(LURA.db.chatOffsetX))
+    xml = xml .. string.format("  <chatOffsetY>%s</chatOffsetY>\n", tostring(LURA.db.chatOffsetY))
+    xml = xml .. string.format("  <summaryScale>%s</summaryScale>\n", tostring(LURA.db.summaryScale))
+    xml = xml .. string.format("  <interactiveScale>%s</interactiveScale>\n", tostring(LURA.db.interactiveScale))
+    
+    if LURA.db.summaryPos then
+        xml = xml .. string.format("  <summaryPos>%s,%s,%s,%s</summaryPos>\n", LURA.db.summaryPos.point, "CENTER", LURA.db.summaryPos.x, LURA.db.summaryPos.y)
+    end
+    if LURA.db.interactivePos then
+        xml = xml .. string.format("  <interactivePos>%s,%s,%s,%s</interactivePos>\n", LURA.db.interactivePos.point, "CENTER", LURA.db.interactivePos.x, LURA.db.interactivePos.y)
+    end
+    
     xml = xml .. "</LUraConfig>"
     
     return Base64Encode(xml)
@@ -73,17 +87,38 @@ function LURA:ApplyImportedConfig(xml, targetProfileName)
     local hiddenStr = string.match(xml, "<hidden>(.-)</hidden>")
     profileData.hidden = hiddenStr and (hiddenStr == "true" or hiddenStr == "1") or false
     
-    -- Save profile and switch
-    LUraHelperDB.profiles[targetProfileName] = profileData
-    LURA:SwitchProfile(targetProfileName)
+    local hideIntStr = string.match(xml, "<hideInteractive>(.-)</hideInteractive>")
+    profileData.hideInteractive = hideIntStr and (hideIntStr == "true" or hideIntStr == "1") or false
+
+    local cChan = string.match(xml, "<chatChannel>(.-)</chatChannel>")
+    profileData.chatChannel = tonumber(cChan) or 4
     
-    -- Apply frame positions
+    local cFont = string.match(xml, "<chatFontSize>(.-)</chatFontSize>")
+    profileData.chatFontSize = tonumber(cFont) or 29
+
+    local bSpace = string.match(xml, "<boxSpacing>(.-)</boxSpacing>")
+    profileData.boxSpacing = tonumber(bSpace) or 36
+
+    local bPad = string.match(xml, "<boxPadding>(.-)</boxPadding>")
+    profileData.boxPadding = tonumber(bPad) or 6
+
+    local cx = string.match(xml, "<chatOffsetX>(.-)</chatOffsetX>")
+    profileData.chatOffsetX = tonumber(cx) or -175
+
+    local cy = string.match(xml, "<chatOffsetY>(.-)</chatOffsetY>")
+    profileData.chatOffsetY = tonumber(cy) or -35
+
+    local sScale = string.match(xml, "<summaryScale>(.-)</summaryScale>")
+    profileData.summaryScale = tonumber(sScale) or 1.0
+
+    local iScale = string.match(xml, "<interactiveScale>(.-)</interactiveScale>")
+    profileData.interactiveScale = tonumber(iScale) or 1.0
+    
     local summaryPosStr = string.match(xml, "<summaryPos>(.-)</summaryPos>")
     if summaryPosStr then
         local p1, p2, x, y = string.match(summaryPosStr, "([^,]+),([^,]+),([^,]+),([^,]+)")
         if p1 and p2 and x and y then
-            LUraSummaryFrame:ClearAllPoints()
-            LUraSummaryFrame:SetPoint(p1, UIParent, p2, tonumber(x), tonumber(y))
+            profileData.summaryPos = { point = p1, x = tonumber(x), y = tonumber(y) }
         end
     end
     
@@ -91,10 +126,13 @@ function LURA:ApplyImportedConfig(xml, targetProfileName)
     if interactivePosStr then
         local p1, p2, x, y = string.match(interactivePosStr, "([^,]+),([^,]+),([^,]+),([^,]+)")
         if p1 and p2 and x and y then
-            LUraInteractiveFrame:ClearAllPoints()
-            LUraInteractiveFrame:SetPoint(p1, UIParent, p2, tonumber(x), tonumber(y))
+            profileData.interactivePos = { point = p1, x = tonumber(x), y = tonumber(y) }
         end
     end
+    
+    -- Save profile and switch
+    LUraHelperDB.profiles[targetProfileName] = profileData
+    LURA:SwitchProfile(targetProfileName)
     
     print("LUra: Imported profile '" .. targetProfileName .. "'.")
 end

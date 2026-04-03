@@ -93,6 +93,38 @@ function LURA:CreateOptionsPanel()
     end)
     LURA.hideBtn = hideBtn
 
+    local hideInteractiveBtn = CreateFrame("CheckButton", "LUraHideInteractiveCheck", panel, "UICheckButtonTemplate")
+    hideInteractiveBtn:SetPoint("TOPLEFT", hideBtn, "BOTTOMLEFT", 0, -8)
+    _G[hideInteractiveBtn:GetName().."Text"]:SetText("Hide Interactive Panel")
+    hideInteractiveBtn:SetScript("OnClick", function(self)
+        LURA.db.hideInteractive = self:GetChecked()
+        LURA:ApplyVisibility()
+    end)
+    LURA.hideInteractiveBtn = hideInteractiveBtn
+
+    local chatChannelLabel = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    chatChannelLabel:SetPoint("TOPLEFT", hideInteractiveBtn, "BOTTOMLEFT", 0, -12)
+    chatChannelLabel:SetText("Listen Channel Number:")
+
+    local chatChannelEditBox = CreateFrame("EditBox", "LUraChatChannelEditBox", panel, "InputBoxTemplate")
+    chatChannelEditBox:SetSize(40, 20)
+    chatChannelEditBox:SetPoint("LEFT", chatChannelLabel, "RIGHT", 10, 0)
+    chatChannelEditBox:SetAutoFocus(false)
+    chatChannelEditBox:SetNumeric(true)
+    chatChannelEditBox:SetMaxLetters(2)
+    chatChannelEditBox:SetScript("OnTextChanged", function(self, isUserInput)
+        if isUserInput then
+            local val = tonumber(self:GetText())
+            if val then
+                LURA.db.chatChannel = val
+                if LURA.chatFrame and LURA.chatFrame.UpdateTitle then
+                    LURA.chatFrame:UpdateTitle()
+                end
+            end
+        end
+    end)
+    LURA.chatChannelEditBox = chatChannelEditBox
+
     -- TODO: Re-enable Test Mode once zone-based visibility is working
     -- local testCheck = CreateFrame("CheckButton", "LUraTestCheck", panel, "UICheckButtonTemplate")
     -- testCheck:SetPoint("TOPLEFT", hideBtn, "BOTTOMLEFT", 0, -8)
@@ -104,7 +136,7 @@ function LURA:CreateOptionsPanel()
     -- LURA.testCheck = testCheck
 
     local profileTitle = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-    profileTitle:SetPoint("TOPLEFT", hideBtn, "BOTTOMLEFT", 0, -20)
+    profileTitle:SetPoint("TOPLEFT", chatChannelLabel, "BOTTOMLEFT", 0, -20)
     profileTitle:SetText("Profile & Tools")
 
     -- Profile dropdown
@@ -178,9 +210,25 @@ function LURA:CreateOptionsPanel()
         LURA.db.markers = {1, 2, 3, 4, 5}
         LURA.db.locked = false
         LURA.db.hidden = false
+        LURA.db.hideInteractive = false
+        LURA.db.chatChannel = 4
         LURA.db.summaryScale = 1.0
         LURA.db.interactiveScale = 1.0
+        LURA.db.boxSpacing = 36
+        LURA.db.boxPadding = 6
+        LURA.db.chatOffsetX = -175
+        LURA.db.chatOffsetY = -35
+        LURA.db.chatFontSize = 29
         LURA.testMode = false
+        
+        if LUraSpaceSlider then LUraSpaceSlider:SetValue(36) end
+        if LUraPadSlider then LUraPadSlider:SetValue(6) end
+        if LUraChatSlider then LUraChatSlider:SetValue(-175) end
+        if LUraChatYSlider then LUraChatYSlider:SetValue(-35) end
+        if LUraFontSlider then LUraFontSlider:SetValue(29) end
+        if LURA.ApplyBoxSpacing then LURA:ApplyBoxSpacing() end
+        if LURA.ApplyChatOffset then LURA:ApplyChatOffset() end
+        if LURA.ApplyChatFont then LURA:ApplyChatFont() end
         
         -- Reset scale first (direct SetScale to avoid center-compensation)
         if LUraSummaryFrame then LUraSummaryFrame:SetScale(1.0) end
@@ -189,7 +237,7 @@ function LURA:CreateOptionsPanel()
         -- Then reset positions
         if LUraSummaryFrame then
             LUraSummaryFrame:ClearAllPoints()
-            LUraSummaryFrame:SetPoint("CENTER", 496, 49)
+            LUraSummaryFrame:SetPoint("CENTER", 0, 200)
             LUraSummaryFrame:SetUserPlaced(false)
         end
         if LUraInteractiveFrame then
@@ -197,7 +245,7 @@ function LURA:CreateOptionsPanel()
             LUraInteractiveFrame:SetPoint("CENTER", 496, -22)
             LUraInteractiveFrame:SetUserPlaced(false)
         end
-        LURA.db.summaryPos = { point = "CENTER", x = 496, y = 49 }
+        LURA.db.summaryPos = { point = "CENTER", x = 0, y = 200 }
         LURA.db.interactivePos = { point = "CENTER", x = 496, y = -22 }
         
         LURA:ApplyScale()
@@ -275,11 +323,20 @@ function LURA:CreateOptionsPanel()
     credits:SetPoint("BOTTOMRIGHT", -16, 16)
     credits:SetText("Made by Deino for Poetic Justice - Ravencrest")
 
+    panel:SetScript("OnShow", function()
+        LURA:UpdateOptionsPanel()
+    end)
+
     LURA:UpdateOptionsPanel()
 
     SLASH_LURA1 = "/lura"
+    SLASH_LURA2 = "/lh"
+    SLASH_LURA3 = "/lurahelper"
     SlashCmdList["LURA"] = function(msg)
-        local cmd = string.lower(strtrim(msg or ""))
+        local raw = strtrim(msg or "")
+        local cmd, arg = string.match(string.lower(raw), "^(%S+)%s*(.*)$")
+        if not cmd then cmd = string.lower(raw) end
+        
         if cmd == "help" then
             print("|cff00ccffL'Ura Helper|r — Slash Commands:")
             print("  |cff66ff66/lura|r — Open the options panel")
@@ -287,6 +344,8 @@ function LURA:CreateOptionsPanel()
             print("  |cff66ff66/lura toggle|r — Toggle panel visibility (hide/show)")
             print("  |cff66ff66/lura lock|r — Lock panel positions")
             print("  |cff66ff66/lura unlock|r — Unlock panel positions")
+            print("  |cff66ff66/lura font <size>|r — Sets the chat font size (e.g. /lura font 24)")
+            print("  |cff66ff66/lura spacing|r — Open the panel to tune symbols spacing")
             -- TODO: Re-enable once zone-based visibility is working
             -- print("  |cff66ff66/lura test|r — Toggle Test Mode (force display outside encounter)")
         elseif cmd == "toggle" then
@@ -301,13 +360,33 @@ function LURA:CreateOptionsPanel()
             LURA.db.locked = false
             LURA:ApplyLockState()
             LURA:UpdateOptionsPanel()
+        elseif cmd == "send" then
+            if LURA.SendSequence then LURA:SendSequence() end
         -- TODO: Re-enable once zone-based visibility is working
         -- elseif cmd == "test" then
         --     LURA.testMode = not LURA.testMode
         --     LURA:ApplyVisibility()
         --     LURA:UpdateOptionsPanel()
         --     print("LUra: Test Mode is now " .. (LURA.testMode and "ON" or "OFF"))
+        elseif cmd == "font" then
+            local size = tonumber(arg)
+            if size and size > 0 then
+                LURA.db.chatFontSize = size
+                if LURA.ApplyChatFont then LURA:ApplyChatFont() end
+                print("|cff00ccffL'Ura Helper|r — Chat font size set to " .. size)
+            else
+                print("|cff00ccffL'Ura Helper|r — Usage: /lura font <size>")
+            end
+        elseif cmd == "spacing" then
+            if LURA.spacingPanel then
+                if LURA.spacingPanel:IsShown() then
+                    LURA.spacingPanel:Hide()
+                else
+                    LURA.spacingPanel:Show()
+                end
+            end
         else
+            LURA:UpdateOptionsPanel()
             Settings.OpenToCategory(category:GetID())
         end
     end
@@ -316,6 +395,11 @@ end
 function LURA:UpdateOptionsPanel()
     if LURA.lockBtn then LURA.lockBtn:SetChecked(LURA.db.locked) end
     if LURA.hideBtn then LURA.hideBtn:SetChecked(LURA.db.hidden) end
+    if LURA.hideInteractiveBtn then LURA.hideInteractiveBtn:SetChecked(LURA.db.hideInteractive) end
+    if LURA.chatChannelEditBox then
+        LURA.chatChannelEditBox:SetText(tostring(LURA.db.chatChannel or 4))
+        LURA.chatChannelEditBox:SetCursorPosition(0)
+    end
     -- if LURA.testCheck then LURA.testCheck:SetChecked(LURA.testMode) end
     if LURA.profileDropdown then
         UIDropDownMenu_SetText(LURA.profileDropdown, LUraHelperDB.activeProfile)
@@ -324,11 +408,13 @@ function LURA:UpdateOptionsPanel()
         local val = LURA.db.summaryScale or 1.0
         LURA.summaryScaleCtrl.slider:SetValue(val)
         LURA.summaryScaleCtrl.editBox:SetText(string.format("%.2f", val))
+        LURA.summaryScaleCtrl.editBox:SetCursorPosition(0)
     end
     if LURA.interactiveScaleCtrl then
         local val = LURA.db.interactiveScale or 1.0
         LURA.interactiveScaleCtrl.slider:SetValue(val)
         LURA.interactiveScaleCtrl.editBox:SetText(string.format("%.2f", val))
+        LURA.interactiveScaleCtrl.editBox:SetCursorPosition(0)
     end
 end
 

@@ -8,5 +8,6 @@
 core.lua
 profiles.lua
 panels.lua
+chat.lua
 options.lua
 importexport.lua

@@ -7,7 +7,13 @@ LURA.SYMBOL_TEXTURES = {
     "Interface\\AddOns\\LUraHelper\\textures\\X",
     "Interface\\AddOns\\LUraHelper\\textures\\Delta",
     "Interface\\AddOns\\LUraHelper\\textures\\T",
-    "Interface\\AddOns\\LUraHelper\\textures\\Diamond",
+}
+LURA.SYMBOL_TEXTS = {
+    "●",
+    "x",
+    "▼",
+    "T",
+    "◆",
 }
 LURA.RESET_TEXTURE = "Interface\\AddOns\\LUraHelper\\textures\\Cancel"
 
@@ -31,10 +37,30 @@ LURA.MARKER_NAMES = {
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("ADDON_LOADED")
 frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+-- Listen on multiple channels as fallback (Midnight combat restrictions)
+frame:RegisterEvent("CHAT_MSG_RAID_WARNING")
+frame:RegisterEvent("CHAT_MSG_RAID")
+frame:RegisterEvent("CHAT_MSG_RAID_LEADER")
+frame:RegisterEvent("CHAT_MSG_INSTANCE_CHAT")
+frame:RegisterEvent("CHAT_MSG_INSTANCE_CHAT_LEADER")
+frame:RegisterEvent("CHAT_MSG_SAY")
+frame:RegisterEvent("CHAT_MSG_YELL")
 -- TODO: Re-enable zone-based visibility once encounter detection is working
 -- frame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 -- frame:RegisterEvent("ENCOUNTER_START")
 -- frame:RegisterEvent("ENCOUNTER_END")
+
+-- Chat events that carry "L'Ura Order:" messages
+local CHAT_EVENTS = {
+    CHAT_MSG_RAID_WARNING = true,
+    CHAT_MSG_RAID = true,
+    CHAT_MSG_RAID_LEADER = true,
+    CHAT_MSG_INSTANCE_CHAT = true,
+    CHAT_MSG_INSTANCE_CHAT_LEADER = true,
+    CHAT_MSG_SAY = true,
+    CHAT_MSG_YELL = true,
+}
+
 frame:SetScript("OnEvent", function(self, event, arg1)
     if event == "ADDON_LOADED" and arg1 == addonName then
         LURA.testMode = false
@@ -69,14 +95,30 @@ frame:SetScript("OnEvent", function(self, event, arg1)
                 markers = {1, 2, 3, 4, 5},
                 locked = false,
                 hidden = false,
-                summaryPos = { point = "CENTER", x = 496, y = 49 },
+                hideInteractive = false,
+                chatChannel = 4,
+                chatFontSize = 29,
+                boxSpacing = 36,
+                boxPadding = 6,
+                chatOffsetX = -175,
+                chatOffsetY = -35,
+                summaryPos = { point = "CENTER", x = 0, y = 200 },
                 interactivePos = { point = "CENTER", x = 496, y = -22 },
+                summaryScale = 1.0,
+                interactiveScale = 1.0,
             }
         end
         local profile = LUraHelperDB.profiles[LUraHelperDB.activeProfile]
         if profile.locked == nil then profile.locked = false end
         if profile.hidden == nil then profile.hidden = false end
-        if not profile.summaryPos then profile.summaryPos = { point = "CENTER", x = 496, y = 49 } end
+        if profile.hideInteractive == nil then profile.hideInteractive = false end
+        if profile.chatChannel == nil then profile.chatChannel = 4 end
+        if profile.chatFontSize == nil then profile.chatFontSize = 29 end
+        if profile.boxSpacing == nil then profile.boxSpacing = 36 end
+        if profile.boxPadding == nil then profile.boxPadding = 6 end
+        if profile.chatOffsetX == nil then profile.chatOffsetX = -175 end
+        if profile.chatOffsetY == nil then profile.chatOffsetY = -35 end
+        if not profile.summaryPos then profile.summaryPos = { point = "CENTER", x = 0, y = 200 } end
         if not profile.interactivePos then profile.interactivePos = { point = "CENTER", x = 496, y = -22 } end
         if not profile.summaryScale then profile.summaryScale = 1.0 end
         if not profile.interactiveScale then profile.interactiveScale = 1.0 end
@@ -86,6 +128,8 @@ frame:SetScript("OnEvent", function(self, event, arg1)
         LURA:CreateOptionsPanel()
         LURA:CreateInteractivePanel()
         LURA:CreateSummaryPanel()
+        LURA:CreateChatPanel()
+        LURA:CreateSpacingPanel()
         
         LURA:ApplyVisibility()
         LURA:ApplyLockState()
@@ -93,6 +137,13 @@ frame:SetScript("OnEvent", function(self, event, arg1)
     elseif event == "PLAYER_ENTERING_WORLD" then
         if LURA.db then
             LURA:ApplyVisibility()
+        end
+    elseif CHAT_EVENTS[event] then
+        if type(arg1) == "string" and arg1:match("^L'Ura Order:") then
+            print("|cff00ff00LUra:|r Received order via " .. event)
+            if LURA.ProcessChatCommand then
+                LURA:ProcessChatCommand(arg1)
+            end
         end
     -- TODO: Re-enable zone-based visibility once encounter detection is working
     -- elseif event == "ZONE_CHANGED_NEW_AREA" then
@@ -131,11 +182,17 @@ function LURA:ApplyVisibility()
     
     if shouldShow then
         LURA:UpdateSummaryPanel()
-        LUraInteractiveFrame:Show()
         LUraSummaryFrame:Show()
+        if LUraChatFrame then LUraChatFrame:Show() end
+        if not LURA.db.hideInteractive then
+            LUraInteractiveFrame:Show()
+        else
+            LUraInteractiveFrame:Hide()
+        end
     else
         LUraInteractiveFrame:Hide()
         LUraSummaryFrame:Hide()
+        if LUraChatFrame then LUraChatFrame:Hide() end
     end
 end
 
@@ -148,6 +205,9 @@ function LURA:ApplyLockState()
         LUraInteractiveFrame:SetScript("OnDragStop", nil)
         LUraSummaryFrame:SetScript("OnDragStart", nil)
         LUraSummaryFrame:SetScript("OnDragStop", nil)
+        if LUraChatFrame and LUraChatFrame.dragHandle then
+            LUraChatFrame.dragHandle:Hide()
+        end
     else
         LUraInteractiveFrame:SetScript("OnDragStart", LUraInteractiveFrame.StartMoving)
         LUraInteractiveFrame:SetScript("OnDragStop", LUraInteractiveFrame.StopMovingOrSizing)
