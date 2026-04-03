@@ -10,14 +10,14 @@ function LURA:CreateChatPanel()
     local MessageDisplay = f:CreateFontString(nil, "OVERLAY")
     f.MessageDisplay = MessageDisplay
     
-    local size = LURA.db.chatFontSize or 29.5
+    local size = LURA.db.chatFontSize or 29
     MessageDisplay:SetFont("Interface\\AddOns\\LUraHelper\\font\\dejavu-sans-mono-bold.TTF", size, "MONOCHROME, OUTLINE")
     -- Left edge since the drag handle is gone
     MessageDisplay:SetPoint("LEFT", f, "LEFT", 0, 0)
     MessageDisplay:SetPoint("RIGHT", f, "RIGHT", 0, 0)
     MessageDisplay:SetJustifyH("LEFT")
     MessageDisplay:SetWordWrap(false)
-    MessageDisplay:SetText("Waiting for message...")
+    MessageDisplay:SetText(".")
 
     local ListenerFrame = CreateFrame("Frame")
     ListenerFrame:RegisterEvent("CHAT_MSG_CHANNEL")
@@ -52,6 +52,6 @@ end
 
 function LURA:ApplyChatFont()
     if not LURA.chatFrame or not LURA.chatFrame.MessageDisplay then return end
-    local size = LURA.db.chatFontSize or 29.5
+    local size = LURA.db.chatFontSize or 29
     LURA.chatFrame.MessageDisplay:SetFont("Interface\\AddOns\\LUraHelper\\font\\dejavu-sans-mono-bold.TTF", size, "MONOCHROME, OUTLINE")
 end

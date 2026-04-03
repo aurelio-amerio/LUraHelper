@@ -93,8 +93,17 @@ function LURA:CreateOptionsPanel()
     end)
     LURA.hideBtn = hideBtn
 
+    local hideInteractiveBtn = CreateFrame("CheckButton", "LUraHideInteractiveCheck", panel, "UICheckButtonTemplate")
+    hideInteractiveBtn:SetPoint("TOPLEFT", hideBtn, "BOTTOMLEFT", 0, -8)
+    _G[hideInteractiveBtn:GetName().."Text"]:SetText("Hide Interactive Panel")
+    hideInteractiveBtn:SetScript("OnClick", function(self)
+        LURA.db.hideInteractive = self:GetChecked()
+        LURA:ApplyVisibility()
+    end)
+    LURA.hideInteractiveBtn = hideInteractiveBtn
+
     local chatChannelLabel = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-    chatChannelLabel:SetPoint("TOPLEFT", hideBtn, "BOTTOMLEFT", 0, -12)
+    chatChannelLabel:SetPoint("TOPLEFT", hideInteractiveBtn, "BOTTOMLEFT", 0, -12)
     chatChannelLabel:SetText("Listen Channel Number:")
 
     local chatChannelEditBox = CreateFrame("EditBox", "LUraChatChannelEditBox", panel, "InputBoxTemplate")
@@ -201,6 +210,7 @@ function LURA:CreateOptionsPanel()
         LURA.db.markers = {1, 2, 3, 4, 5}
         LURA.db.locked = false
         LURA.db.hidden = false
+        LURA.db.hideInteractive = false
         LURA.db.chatChannel = 4
         LURA.db.summaryScale = 1.0
         LURA.db.interactiveScale = 1.0
@@ -208,7 +218,7 @@ function LURA:CreateOptionsPanel()
         LURA.db.boxPadding = 6
         LURA.db.chatOffsetX = -175
         LURA.db.chatOffsetY = -35
-        LURA.db.chatFontSize = 29.5
+        LURA.db.chatFontSize = 29
         LURA.testMode = false
         
         if LUraSpaceSlider then LUraSpaceSlider:SetValue(36) end
@@ -227,7 +237,7 @@ function LURA:CreateOptionsPanel()
         -- Then reset positions
         if LUraSummaryFrame then
             LUraSummaryFrame:ClearAllPoints()
-            LUraSummaryFrame:SetPoint("CENTER", 496, 49)
+            LUraSummaryFrame:SetPoint("CENTER", 0, 200)
             LUraSummaryFrame:SetUserPlaced(false)
         end
         if LUraInteractiveFrame then
@@ -235,7 +245,7 @@ function LURA:CreateOptionsPanel()
             LUraInteractiveFrame:SetPoint("CENTER", 496, -22)
             LUraInteractiveFrame:SetUserPlaced(false)
         end
-        LURA.db.summaryPos = { point = "CENTER", x = 496, y = 49 }
+        LURA.db.summaryPos = { point = "CENTER", x = 0, y = 200 }
         LURA.db.interactivePos = { point = "CENTER", x = 496, y = -22 }
         
         LURA:ApplyScale()
@@ -378,6 +388,7 @@ end
 function LURA:UpdateOptionsPanel()
     if LURA.lockBtn then LURA.lockBtn:SetChecked(LURA.db.locked) end
     if LURA.hideBtn then LURA.hideBtn:SetChecked(LURA.db.hidden) end
+    if LURA.hideInteractiveBtn then LURA.hideInteractiveBtn:SetChecked(LURA.db.hideInteractive) end
     if LURA.chatChannelEditBox then
         LURA.chatChannelEditBox:SetText(tostring(LURA.db.chatChannel or 4))
     end

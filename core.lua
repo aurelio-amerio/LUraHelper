@@ -95,26 +95,28 @@ frame:SetScript("OnEvent", function(self, event, arg1)
                 markers = {1, 2, 3, 4, 5},
                 locked = false,
                 hidden = false,
+                hideInteractive = false,
                 chatChannel = 4,
-                chatFontSize = 29.5,
+                chatFontSize = 29,
                 boxSpacing = 36,
                 boxPadding = 6,
                 chatOffsetX = -175,
                 chatOffsetY = -35,
-                summaryPos = { point = "CENTER", x = 496, y = 49 },
+                summaryPos = { point = "CENTER", x = 0, y = 200 },
                 interactivePos = { point = "CENTER", x = 496, y = -22 },
             }
         end
         local profile = LUraHelperDB.profiles[LUraHelperDB.activeProfile]
         if profile.locked == nil then profile.locked = false end
         if profile.hidden == nil then profile.hidden = false end
+        if profile.hideInteractive == nil then profile.hideInteractive = false end
         if profile.chatChannel == nil then profile.chatChannel = 4 end
-        if profile.chatFontSize == nil then profile.chatFontSize = 29.5 end
+        if profile.chatFontSize == nil then profile.chatFontSize = 29 end
         if profile.boxSpacing == nil then profile.boxSpacing = 36 end
         if profile.boxPadding == nil then profile.boxPadding = 6 end
         if profile.chatOffsetX == nil then profile.chatOffsetX = -175 end
         if profile.chatOffsetY == nil then profile.chatOffsetY = -35 end
-        if not profile.summaryPos then profile.summaryPos = { point = "CENTER", x = 496, y = 49 } end
+        if not profile.summaryPos then profile.summaryPos = { point = "CENTER", x = 0, y = 200 } end
         if not profile.interactivePos then profile.interactivePos = { point = "CENTER", x = 496, y = -22 } end
         if not profile.summaryScale then profile.summaryScale = 1.0 end
         if not profile.interactiveScale then profile.interactiveScale = 1.0 end
@@ -124,7 +126,6 @@ frame:SetScript("OnEvent", function(self, event, arg1)
         LURA:CreateOptionsPanel()
         LURA:CreateInteractivePanel()
         LURA:CreateSummaryPanel()
-        LURA:CreateDebugPanel()
         LURA:CreateChatPanel()
         LURA:CreateSpacingPanel()
         
@@ -179,14 +180,16 @@ function LURA:ApplyVisibility()
     
     if shouldShow then
         LURA:UpdateSummaryPanel()
-        LUraInteractiveFrame:Show()
         LUraSummaryFrame:Show()
-        if LUraDebugFrame then LUraDebugFrame:Show() end
         if LUraChatFrame then LUraChatFrame:Show() end
+        if not LURA.db.hideInteractive then
+            LUraInteractiveFrame:Show()
+        else
+            LUraInteractiveFrame:Hide()
+        end
     else
         LUraInteractiveFrame:Hide()
         LUraSummaryFrame:Hide()
-        if LUraDebugFrame then LUraDebugFrame:Hide() end
         if LUraChatFrame then LUraChatFrame:Hide() end
     end
 end
@@ -200,10 +203,6 @@ function LURA:ApplyLockState()
         LUraInteractiveFrame:SetScript("OnDragStop", nil)
         LUraSummaryFrame:SetScript("OnDragStart", nil)
         LUraSummaryFrame:SetScript("OnDragStop", nil)
-        if LUraDebugFrame then
-            LUraDebugFrame:SetScript("OnDragStart", nil)
-            LUraDebugFrame:SetScript("OnDragStop", nil)
-        end
         if LUraChatFrame and LUraChatFrame.dragHandle then
             LUraChatFrame.dragHandle:Hide()
         end
@@ -212,10 +211,6 @@ function LURA:ApplyLockState()
         LUraInteractiveFrame:SetScript("OnDragStop", LUraInteractiveFrame.StopMovingOrSizing)
         LUraSummaryFrame:SetScript("OnDragStart", LUraSummaryFrame.StartMoving)
         LUraSummaryFrame:SetScript("OnDragStop", LUraSummaryFrame.StopMovingOrSizing)
-        if LUraDebugFrame then
-            LUraDebugFrame:SetScript("OnDragStart", LUraDebugFrame.StartMoving)
-            LUraDebugFrame:SetScript("OnDragStop", LUraDebugFrame.StopMovingOrSizing)
-        end
     end
 end
 -- Helper: apply scale to a frame while keeping its visual center position

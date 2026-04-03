@@ -33,7 +33,7 @@ end
 function LURA:SaveCurrentPositions()
     if LUraSummaryFrame and LURA.db then
         local p, _, _, x, y = LUraSummaryFrame:GetPoint()
-        LURA.db.summaryPos = { point = p or "CENTER", x = x or 496, y = y or 49 }
+        LURA.db.summaryPos = { point = p or "CENTER", x = x or 0, y = y or 200 }
     end
     if LUraInteractiveFrame and LURA.db then
         local p, _, _, x, y = LUraInteractiveFrame:GetPoint()
@@ -59,7 +59,14 @@ function LURA:SwitchProfile(name)
     LURA:SaveCurrentPositions()
     LUraHelperDB.activeProfile = name
     LURA.db = LUraHelperDB.profiles[name]
+    
+    if LURA.ApplyScale then LURA:ApplyScale() end
     LURA:ApplyProfilePositions()
+    
+    if LURA.ApplyBoxSpacing then LURA:ApplyBoxSpacing() end
+    if LURA.ApplyChatOffset then LURA:ApplyChatOffset() end
+    if LURA.ApplyChatFont then LURA:ApplyChatFont() end
+    
     LURA:RefreshAllUI()
 end
 

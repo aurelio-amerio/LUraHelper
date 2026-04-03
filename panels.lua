@@ -140,9 +140,19 @@ end
 function LURA:ResetSequence()
     LURA.currentSequence = {}
     if LURA.interactiveCopyBox then
-        LURA.interactiveCopyBox.targetText = ""
-        LURA.interactiveCopyBox:SetText("")
-        LURA.interactiveCopyBox:ClearFocus()
+        local activeCount = LURA:GetAvailableSlots()
+        local msg = ""
+        for i = 1, activeCount do
+            msg = msg .. "." .. (i < activeCount and " " or "")
+        end
+        local channel = tonumber(LURA.db.chatChannel) or 4
+        local fullMsg = "/" .. channel .. " " .. msg
+        
+        LURA.interactiveCopyBox.targetText = fullMsg
+        LURA.interactiveCopyBox:SetText(fullMsg)
+        LURA.interactiveCopyBox:SetCursorPosition(0)
+        LURA.interactiveCopyBox:SetFocus()
+        LURA.interactiveCopyBox:HighlightText()
     end
     LURA:UpdateSummaryPanel()
 end
@@ -150,7 +160,7 @@ end
 function LURA:CreateSummaryPanel()
     local f = CreateFrame("Frame", "LUraSummaryFrame", UIParent)
     f:SetSize(230, 80)
-    f:SetPoint("CENTER", 496, 49)
+    f:SetPoint("CENTER", 0, 200)
     f:SetMovable(true)
     f:EnableMouse(true)
     f:RegisterForDrag("LeftButton")
@@ -464,13 +474,13 @@ function LURA:CreateSpacingPanel()
     fontSlider.Low:SetText("10")
     fontSlider.High:SetText("50")
     _G[fontSlider:GetName() .. "Text"]:SetText("Chat Font Size")
-    fontSlider:SetValue(LURA.db.chatFontSize or 29.5)
+    fontSlider:SetValue(LURA.db.chatFontSize or 29)
 
     local fontEdit = CreateFrame("EditBox", nil, f, "InputBoxTemplate")
     fontEdit:SetSize(40, 20)
     fontEdit:SetPoint("LEFT", fontSlider, "RIGHT", 15, 0)
     fontEdit:SetAutoFocus(false)
-    fontEdit:SetText(tostring(LURA.db.chatFontSize or 29.5))
+    fontEdit:SetText(tostring(LURA.db.chatFontSize or 29))
     fontEdit:SetScript("OnEnterPressed", function(self)
         local val = tonumber(self:GetText())
         if val then fontSlider:SetValue(val) end
@@ -483,35 +493,11 @@ function LURA:CreateSpacingPanel()
         if LURA.ApplyChatFont then LURA:ApplyChatFont() end
     end)
     
-    f:Show()
+    f:Hide()
     LURA.spacingPanel = f
 end
 
-function LURA:CreateDebugPanel()
-    local f = CreateFrame("Frame", "LUraDebugFrame", UIParent)
-    f:SetSize(130, 40)
-    f:SetPoint("CENTER", 496, -70)
-    f:SetMovable(true)
-    f:EnableMouse(true)
-    f:RegisterForDrag("LeftButton")
-    f:SetScript("OnDragStart", f.StartMoving)
-    f:SetScript("OnDragStop", f.StopMovingOrSizing)
-    
-    local tex = f:CreateTexture(nil, "BACKGROUND")
-    tex:SetAllPoints()
-    tex:SetColorTexture(0, 0, 0, 0.7)
-    
-    local btn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-    btn:SetSize(110, 22)
-    btn:SetPoint("CENTER", f, "CENTER", 0, 0)
-    btn:SetText("Copy Warning")
-    
-    btn:SetScript("OnClick", function()
-        if LURA.SendSequence then LURA:SendSequence() end
-    end)
-    
-    LURA.debugFrame = f
-end
+
 
 function LURA:SendSequence()
     if not LURA.currentSequence or #LURA.currentSequence == 0 then
