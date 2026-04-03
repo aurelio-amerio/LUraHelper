@@ -40,7 +40,7 @@ function LURA:ExportConfig()
     xml = xml .. string.format("  <markers>%s</markers>\n", table.concat(LURA.db.markers, ","))
     xml = xml .. string.format("  <locked>%s</locked>\n", tostring(LURA.db.locked))
     xml = xml .. string.format("  <hidden>%s</hidden>\n", tostring(LURA.db.hidden))
-    xml = xml .. string.format("  <hideInteractive>%s</hideInteractive>\n", tostring(LURA.db.hideInteractive))
+    xml = xml .. string.format("  <showRLTools>%s</showRLTools>\n", tostring(LURA.db.showRLTools))
     xml = xml .. string.format("  <chatChannel>%s</chatChannel>\n", tostring(LURA.db.chatChannel))
     xml = xml .. string.format("  <chatFontSize>%s</chatFontSize>\n", tostring(LURA.db.chatFontSize))
     xml = xml .. string.format("  <boxSpacing>%s</boxSpacing>\n", tostring(LURA.db.boxSpacing))
@@ -87,8 +87,17 @@ function LURA:ApplyImportedConfig(xml, targetProfileName)
     local hiddenStr = string.match(xml, "<hidden>(.-)</hidden>")
     profileData.hidden = hiddenStr and (hiddenStr == "true" or hiddenStr == "1") or false
     
-    local hideIntStr = string.match(xml, "<hideInteractive>(.-)</hideInteractive>")
-    profileData.hideInteractive = hideIntStr and (hideIntStr == "true" or hideIntStr == "1") or false
+    local showRLStr = string.match(xml, "<showRLTools>(.-)</showRLTools>")
+    if showRLStr then
+        profileData.showRLTools = (showRLStr == "true" or showRLStr == "1")
+    else
+        local hideIntStr = string.match(xml, "<hideInteractive>(.-)</hideInteractive>")
+        if hideIntStr then
+            profileData.showRLTools = not (hideIntStr == "true" or hideIntStr == "1")
+        else
+            profileData.showRLTools = false
+        end
+    end
 
     local cChan = string.match(xml, "<chatChannel>(.-)</chatChannel>")
     profileData.chatChannel = tonumber(cChan) or 4

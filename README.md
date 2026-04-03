@@ -10,7 +10,7 @@ A World of Warcraft addon for tracking symbol sequences against raid markers dur
 2. Ensure the entire raid joins this custom channel.
 3. Take note of the chat channel number (this might be different for each person).
 4. Open the settings with `/lura` and type the chat channel number. This is the channel the addon will monitor for sequences.
-5. **Raid Assistants/Leaders:** Make sure to uncheck the "Hide Interactive Panel" in the options, as it is hidden by default. Only assistants need the interactive panel to broadcast the order.
+5. **Raid Assistants/Leaders:** Make sure to check "Show Raid Assist tools" in the options, as the interactive panel is hidden by default. Only assistants need the interactive panel to broadcast the order.
 6. *(Optional)* Move the panels to your preferred position, lock them so you don't accidentally move them, and save your profile with a new name.
 7. *(Optional)* Change the order of the raid markers or disable unneeded ones. For example, on Normal difficulty, you only need 3 raid markers.
 

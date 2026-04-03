@@ -93,17 +93,17 @@ function LURA:CreateOptionsPanel()
     end)
     LURA.hideBtn = hideBtn
 
-    local hideInteractiveBtn = CreateFrame("CheckButton", "LUraHideInteractiveCheck", panel, "UICheckButtonTemplate")
-    hideInteractiveBtn:SetPoint("TOPLEFT", hideBtn, "BOTTOMLEFT", 0, -8)
-    _G[hideInteractiveBtn:GetName().."Text"]:SetText("Hide Interactive Panel")
-    hideInteractiveBtn:SetScript("OnClick", function(self)
-        LURA.db.hideInteractive = self:GetChecked()
+    local showRLToolsBtn = CreateFrame("CheckButton", "LUraShowRLToolsCheck", panel, "UICheckButtonTemplate")
+    showRLToolsBtn:SetPoint("TOPLEFT", hideBtn, "BOTTOMLEFT", 0, -8)
+    _G[showRLToolsBtn:GetName().."Text"]:SetText("Show Raid Assist tools")
+    showRLToolsBtn:SetScript("OnClick", function(self)
+        LURA.db.showRLTools = self:GetChecked()
         LURA:ApplyVisibility()
     end)
-    LURA.hideInteractiveBtn = hideInteractiveBtn
+    LURA.showRLToolsBtn = showRLToolsBtn
 
     local chatChannelLabel = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-    chatChannelLabel:SetPoint("TOPLEFT", hideInteractiveBtn, "BOTTOMLEFT", 0, -12)
+    chatChannelLabel:SetPoint("TOPLEFT", showRLToolsBtn, "BOTTOMLEFT", 0, -12)
     chatChannelLabel:SetText("Listen Channel Number:")
 
     local chatChannelEditBox = CreateFrame("EditBox", "LUraChatChannelEditBox", panel, "InputBoxTemplate")
@@ -210,7 +210,7 @@ function LURA:CreateOptionsPanel()
         LURA.db.markers = {1, 2, 3, 4, 5}
         LURA.db.locked = false
         LURA.db.hidden = false
-        LURA.db.hideInteractive = false
+        LURA.db.showRLTools = false
         LURA.db.chatChannel = 4
         LURA.db.summaryScale = 1.0
         LURA.db.interactiveScale = 1.0
@@ -395,7 +395,7 @@ end
 function LURA:UpdateOptionsPanel()
     if LURA.lockBtn then LURA.lockBtn:SetChecked(LURA.db.locked) end
     if LURA.hideBtn then LURA.hideBtn:SetChecked(LURA.db.hidden) end
-    if LURA.hideInteractiveBtn then LURA.hideInteractiveBtn:SetChecked(LURA.db.hideInteractive) end
+    if LURA.showRLToolsBtn then LURA.showRLToolsBtn:SetChecked(LURA.db.showRLTools) end
     if LURA.chatChannelEditBox then
         LURA.chatChannelEditBox:SetText(tostring(LURA.db.chatChannel or 4))
         LURA.chatChannelEditBox:SetCursorPosition(0)
