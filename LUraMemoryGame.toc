@@ -1,0 +1,8 @@
+## Interface: 110000
+## Title: L'Ura Memory Game
+## Notes: Track a sequence of 5 symbols against 5 target raid markers.
+## Author: Aurelio
+## Version: 1.0.0
+## SavedVariables: LUraMemoryGameDB
+
+core.lua
