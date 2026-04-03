@@ -323,9 +323,15 @@ function LURA:CreateOptionsPanel()
     credits:SetPoint("BOTTOMRIGHT", -16, 16)
     credits:SetText("Made by Deino for Poetic Justice - Ravencrest")
 
+    panel:SetScript("OnShow", function()
+        LURA:UpdateOptionsPanel()
+    end)
+
     LURA:UpdateOptionsPanel()
 
     SLASH_LURA1 = "/lura"
+    SLASH_LURA2 = "/lh"
+    SLASH_LURA3 = "/lurahelper"
     SlashCmdList["LURA"] = function(msg)
         local raw = strtrim(msg or "")
         local cmd, arg = string.match(string.lower(raw), "^(%S+)%s*(.*)$")
@@ -380,6 +386,7 @@ function LURA:CreateOptionsPanel()
                 end
             end
         else
+            LURA:UpdateOptionsPanel()
             Settings.OpenToCategory(category:GetID())
         end
     end
@@ -391,6 +398,7 @@ function LURA:UpdateOptionsPanel()
     if LURA.hideInteractiveBtn then LURA.hideInteractiveBtn:SetChecked(LURA.db.hideInteractive) end
     if LURA.chatChannelEditBox then
         LURA.chatChannelEditBox:SetText(tostring(LURA.db.chatChannel or 4))
+        LURA.chatChannelEditBox:SetCursorPosition(0)
     end
     -- if LURA.testCheck then LURA.testCheck:SetChecked(LURA.testMode) end
     if LURA.profileDropdown then
@@ -400,11 +408,13 @@ function LURA:UpdateOptionsPanel()
         local val = LURA.db.summaryScale or 1.0
         LURA.summaryScaleCtrl.slider:SetValue(val)
         LURA.summaryScaleCtrl.editBox:SetText(string.format("%.2f", val))
+        LURA.summaryScaleCtrl.editBox:SetCursorPosition(0)
     end
     if LURA.interactiveScaleCtrl then
         local val = LURA.db.interactiveScale or 1.0
         LURA.interactiveScaleCtrl.slider:SetValue(val)
         LURA.interactiveScaleCtrl.editBox:SetText(string.format("%.2f", val))
+        LURA.interactiveScaleCtrl.editBox:SetCursorPosition(0)
     end
 end
 

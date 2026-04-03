@@ -104,6 +104,8 @@ frame:SetScript("OnEvent", function(self, event, arg1)
                 chatOffsetY = -35,
                 summaryPos = { point = "CENTER", x = 0, y = 200 },
                 interactivePos = { point = "CENTER", x = 496, y = -22 },
+                summaryScale = 1.0,
+                interactiveScale = 1.0,
             }
         end
         local profile = LUraHelperDB.profiles[LUraHelperDB.activeProfile]
