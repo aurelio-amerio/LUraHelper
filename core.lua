@@ -90,6 +90,11 @@ frame:SetScript("OnEvent", function(self, event, arg1)
                 locked = false,
                 hidden = false,
                 chatChannel = 4,
+                chatFontSize = 29.5,
+                boxSpacing = 36,
+                boxPadding = 6,
+                chatOffsetX = -210,
+                chatOffsetY = -40,
                 summaryPos = { point = "CENTER", x = 496, y = 49 },
                 interactivePos = { point = "CENTER", x = 496, y = -22 },
             }
@@ -98,6 +103,11 @@ frame:SetScript("OnEvent", function(self, event, arg1)
         if profile.locked == nil then profile.locked = false end
         if profile.hidden == nil then profile.hidden = false end
         if profile.chatChannel == nil then profile.chatChannel = 4 end
+        if profile.chatFontSize == nil then profile.chatFontSize = 29 end
+        if profile.boxSpacing == nil then profile.boxSpacing = 36 end
+        if profile.boxPadding == nil then profile.boxPadding = 6 end
+        if profile.chatOffsetX == nil then profile.chatOffsetX = -212 end
+        if profile.chatOffsetY == nil then profile.chatOffsetY = -40 end
         if not profile.summaryPos then profile.summaryPos = { point = "CENTER", x = 496, y = 49 } end
         if not profile.interactivePos then profile.interactivePos = { point = "CENTER", x = 496, y = -22 } end
         if not profile.summaryScale then profile.summaryScale = 1.0 end
@@ -110,6 +120,7 @@ frame:SetScript("OnEvent", function(self, event, arg1)
         LURA:CreateSummaryPanel()
         LURA:CreateDebugPanel()
         LURA:CreateChatPanel()
+        LURA:CreateSpacingPanel()
         
         LURA:ApplyVisibility()
         LURA:ApplyLockState()
@@ -187,9 +198,8 @@ function LURA:ApplyLockState()
             LUraDebugFrame:SetScript("OnDragStart", nil)
             LUraDebugFrame:SetScript("OnDragStop", nil)
         end
-        if LUraChatFrame then
-            LUraChatFrame:SetScript("OnDragStart", nil)
-            LUraChatFrame:SetScript("OnDragStop", nil)
+        if LUraChatFrame and LUraChatFrame.dragHandle then
+            LUraChatFrame.dragHandle:Hide()
         end
     else
         LUraInteractiveFrame:SetScript("OnDragStart", LUraInteractiveFrame.StartMoving)
@@ -199,10 +209,6 @@ function LURA:ApplyLockState()
         if LUraDebugFrame then
             LUraDebugFrame:SetScript("OnDragStart", LUraDebugFrame.StartMoving)
             LUraDebugFrame:SetScript("OnDragStop", LUraDebugFrame.StopMovingOrSizing)
-        end
-        if LUraChatFrame then
-            LUraChatFrame:SetScript("OnDragStart", LUraChatFrame.StartMoving)
-            LUraChatFrame:SetScript("OnDragStop", LUraChatFrame.StopMovingOrSizing)
         end
     end
 end

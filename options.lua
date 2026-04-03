@@ -204,7 +204,21 @@ function LURA:CreateOptionsPanel()
         LURA.db.chatChannel = 4
         LURA.db.summaryScale = 1.0
         LURA.db.interactiveScale = 1.0
+        LURA.db.boxSpacing = 36
+        LURA.db.boxPadding = 6
+        LURA.db.chatOffsetX = -212
+        LURA.db.chatOffsetY = -40
+        LURA.db.chatFontSize = 29
         LURA.testMode = false
+        
+        if LUraSpaceSlider then LUraSpaceSlider:SetValue(36) end
+        if LUraPadSlider then LUraPadSlider:SetValue(6) end
+        if LUraChatSlider then LUraChatSlider:SetValue(-212) end
+        if LUraChatYSlider then LUraChatYSlider:SetValue(-40) end
+        if LUraFontSlider then LUraFontSlider:SetValue(29) end
+        if LURA.ApplyBoxSpacing then LURA:ApplyBoxSpacing() end
+        if LURA.ApplyChatOffset then LURA:ApplyChatOffset() end
+        if LURA.ApplyChatFont then LURA:ApplyChatFont() end
         
         -- Reset scale first (direct SetScale to avoid center-compensation)
         if LUraSummaryFrame then LUraSummaryFrame:SetScale(1.0) end
@@ -303,7 +317,10 @@ function LURA:CreateOptionsPanel()
 
     SLASH_LURA1 = "/lura"
     SlashCmdList["LURA"] = function(msg)
-        local cmd = string.lower(strtrim(msg or ""))
+        local raw = strtrim(msg or "")
+        local cmd, arg = string.match(string.lower(raw), "^(%S+)%s*(.*)$")
+        if not cmd then cmd = string.lower(raw) end
+        
         if cmd == "help" then
             print("|cff00ccffL'Ura Helper|r — Slash Commands:")
             print("  |cff66ff66/lura|r — Open the options panel")
@@ -311,6 +328,8 @@ function LURA:CreateOptionsPanel()
             print("  |cff66ff66/lura toggle|r — Toggle panel visibility (hide/show)")
             print("  |cff66ff66/lura lock|r — Lock panel positions")
             print("  |cff66ff66/lura unlock|r — Unlock panel positions")
+            print("  |cff66ff66/lura font <size>|r — Sets the chat font size (e.g. /lura font 24)")
+            print("  |cff66ff66/lura spacing|r — Open the panel to tune symbols spacing")
             -- TODO: Re-enable once zone-based visibility is working
             -- print("  |cff66ff66/lura test|r — Toggle Test Mode (force display outside encounter)")
         elseif cmd == "toggle" then
@@ -333,6 +352,23 @@ function LURA:CreateOptionsPanel()
         --     LURA:ApplyVisibility()
         --     LURA:UpdateOptionsPanel()
         --     print("LUra: Test Mode is now " .. (LURA.testMode and "ON" or "OFF"))
+        elseif cmd == "font" then
+            local size = tonumber(arg)
+            if size and size > 0 then
+                LURA.db.chatFontSize = size
+                if LURA.ApplyChatFont then LURA:ApplyChatFont() end
+                print("|cff00ccffL'Ura Helper|r — Chat font size set to " .. size)
+            else
+                print("|cff00ccffL'Ura Helper|r — Usage: /lura font <size>")
+            end
+        elseif cmd == "spacing" then
+            if LURA.spacingPanel then
+                if LURA.spacingPanel:IsShown() then
+                    LURA.spacingPanel:Hide()
+                else
+                    LURA.spacingPanel:Show()
+                end
+            end
         else
             Settings.OpenToCategory(category:GetID())
         end

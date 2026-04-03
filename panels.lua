@@ -15,10 +15,12 @@ function LURA:CreateInteractivePanel()
     tex:SetAllPoints()
     tex:SetColorTexture(0, 0, 0, 0.7)
     
+    LURA.interactiveBtns = {}
     for i = 1, 5 do
         local btn = CreateFrame("Button", nil, f)
         btn:SetSize(30, 30)
         btn:SetPoint("LEFT", f, "LEFT", 10 + (i-1)*35, 0)
+        LURA.interactiveBtns[i] = btn
         
         local icon = btn:CreateTexture(nil, "BACKGROUND")
         icon:SetAllPoints()
@@ -35,6 +37,7 @@ function LURA:CreateInteractivePanel()
     local resetBtn = CreateFrame("Button", nil, f)
     resetBtn:SetSize(30, 30)
     resetBtn:SetPoint("LEFT", f, "LEFT", 10 + 5*35, 0)
+    LURA.interactiveResetBtn = resetBtn
     
     local resetIcon = resetBtn:CreateTexture(nil, "BACKGROUND")
     resetIcon:SetAllPoints()
@@ -161,11 +164,9 @@ function LURA:UpdateSummaryPanel()
         end
     end
     
-    if LURA.summaryResetBtn then
-        LURA.summaryResetBtn:SetPoint("TOPLEFT", LUraSummaryFrame, "TOPLEFT", 10 + 5 * 35, -45)
+    if LURA.ApplyBoxSpacing then
+        LURA:ApplyBoxSpacing()
     end
-    
-    LUraSummaryFrame:SetWidth(230)
 end
 
 function LURA:UpdateSummaryPanelMarkers()
@@ -206,6 +207,191 @@ function LURA:ProcessChatCommand(msg)
             LURA:UpdateSummaryPanel()
         end
     end
+end
+
+function LURA:ApplyBoxSpacing()
+    local spacing = LURA.db.boxSpacing or 35
+    local padding = LURA.db.boxPadding or 10
+    
+    local width = padding + 5 * spacing + 30 + padding
+    
+    if LUraInteractiveFrame and LURA.interactiveBtns then
+        LUraInteractiveFrame:SetWidth(width)
+        for i = 1, 5 do
+            LURA.interactiveBtns[i]:SetPoint("LEFT", LUraInteractiveFrame, "LEFT", padding + (i-1)*spacing, 0)
+        end
+        if LURA.interactiveResetBtn then
+            LURA.interactiveResetBtn:SetPoint("LEFT", LUraInteractiveFrame, "LEFT", padding + 5*spacing, 0)
+        end
+    end
+    
+    if LUraSummaryFrame and LURA.summaryTopSlotTextures then
+        LUraSummaryFrame:SetWidth(width)
+        for i = 1, 5 do
+            LURA.summaryTopSlotTextures[i]:SetPoint("TOPLEFT", LUraSummaryFrame, "TOPLEFT", padding + (i-1)*spacing, -10)
+            LURA.summaryBottomSlotTextures[i]:SetPoint("TOPLEFT", LUraSummaryFrame, "TOPLEFT", padding + (i-1)*spacing, -45)
+        end
+        if LURA.summaryResetBtn then
+            LURA.summaryResetBtn:SetPoint("TOPLEFT", LUraSummaryFrame, "TOPLEFT", padding + 5*spacing, -45)
+        end
+    end
+end
+
+function LURA:CreateSpacingPanel()
+    local f = CreateFrame("Frame", "LUraSpacingPanel", UIParent, "BasicFrameTemplate")
+    f:SetSize(300, 350)
+    f:SetPoint("CENTER", 0, 100)
+    f:SetMovable(true)
+    f:EnableMouse(true)
+    f:RegisterForDrag("LeftButton")
+    f:SetScript("OnDragStart", f.StartMoving)
+    f:SetScript("OnDragStop", f.StopMovingOrSizing)
+    
+    f.TitleText:SetText("Tune Panel Spacing")
+    
+    local function UpdateLayout()
+        if LURA.ApplyBoxSpacing then LURA:ApplyBoxSpacing() end
+    end
+    
+    -- Spacing Slider
+    local spaceSlider = CreateFrame("Slider", "LUraSpaceSlider", f, "OptionsSliderTemplate")
+    spaceSlider:SetPoint("TOPLEFT", f, "TOPLEFT", 20, -45)
+    spaceSlider:SetMinMaxValues(20, 100)
+    spaceSlider:SetValueStep(1)
+    spaceSlider:SetObeyStepOnDrag(true)
+    spaceSlider.Low:SetText("20")
+    spaceSlider.High:SetText("100")
+    _G[spaceSlider:GetName() .. "Text"]:SetText("Spacing (Width)")
+    spaceSlider:SetValue(LURA.db.boxSpacing or 35)
+
+    local spaceEditX = CreateFrame("EditBox", nil, f, "InputBoxTemplate")
+    spaceEditX:SetSize(40, 20)
+    spaceEditX:SetPoint("LEFT", spaceSlider, "RIGHT", 15, 0)
+    spaceEditX:SetAutoFocus(false)
+    spaceEditX:SetText(tostring(LURA.db.boxSpacing or 35))
+    spaceEditX:SetScript("OnEnterPressed", function(self)
+        local val = tonumber(self:GetText())
+        if val then spaceSlider:SetValue(val) end
+        self:ClearFocus()
+    end)
+    spaceSlider:SetScript("OnValueChanged", function(self, value)
+        spaceEditX:SetText(tostring(math.floor(value + 0.5)))
+        LURA.db.boxSpacing = math.floor(value + 0.5)
+        UpdateLayout()
+    end)
+    
+    -- Padding Slider
+    local padSlider = CreateFrame("Slider", "LUraPadSlider", f, "OptionsSliderTemplate")
+    padSlider:SetPoint("TOPLEFT", spaceSlider, "BOTTOMLEFT", 0, -30)
+    padSlider:SetMinMaxValues(0, 50)
+    padSlider:SetValueStep(1)
+    padSlider:SetObeyStepOnDrag(true)
+    padSlider.Low:SetText("0")
+    padSlider.High:SetText("50")
+    _G[padSlider:GetName() .. "Text"]:SetText("Edge Padding")
+    padSlider:SetValue(LURA.db.boxPadding or 10)
+
+    local padEditX = CreateFrame("EditBox", nil, f, "InputBoxTemplate")
+    padEditX:SetSize(40, 20)
+    padEditX:SetPoint("LEFT", padSlider, "RIGHT", 15, 0)
+    padEditX:SetAutoFocus(false)
+    padEditX:SetText(tostring(LURA.db.boxPadding or 10))
+    padEditX:SetScript("OnEnterPressed", function(self)
+        local val = tonumber(self:GetText())
+        if val then padSlider:SetValue(val) end
+        self:ClearFocus()
+    end)
+    padSlider:SetScript("OnValueChanged", function(self, value)
+        padEditX:SetText(tostring(math.floor(value + 0.5)))
+        LURA.db.boxPadding = math.floor(value + 0.5)
+        UpdateLayout()
+    end)
+    
+    -- Chat Offset X Slider
+    local chatSlider = CreateFrame("Slider", "LUraChatSlider", f, "OptionsSliderTemplate")
+    chatSlider:SetPoint("TOPLEFT", padSlider, "BOTTOMLEFT", 0, -30)
+    chatSlider:SetMinMaxValues(-300, 300)
+    chatSlider:SetValueStep(1)
+    chatSlider:SetObeyStepOnDrag(true)
+    chatSlider.Low:SetText("-300")
+    chatSlider.High:SetText("300")
+    _G[chatSlider:GetName() .. "Text"]:SetText("Chat X Offset")
+    chatSlider:SetValue(LURA.db.chatOffsetX or 0)
+
+    local chatEditX = CreateFrame("EditBox", nil, f, "InputBoxTemplate")
+    chatEditX:SetSize(40, 20)
+    chatEditX:SetPoint("LEFT", chatSlider, "RIGHT", 15, 0)
+    chatEditX:SetAutoFocus(false)
+    chatEditX:SetText(tostring(LURA.db.chatOffsetX or 0))
+    chatEditX:SetScript("OnEnterPressed", function(self)
+        local val = tonumber(self:GetText())
+        if val then chatSlider:SetValue(val) end
+        self:ClearFocus()
+    end)
+    chatSlider:SetScript("OnValueChanged", function(self, value)
+        chatEditX:SetText(tostring(math.floor(value + 0.5)))
+        LURA.db.chatOffsetX = math.floor(value + 0.5)
+        if LURA.ApplyChatOffset then LURA:ApplyChatOffset() end
+    end)
+    
+    -- Chat Offset Y Slider
+    local chatYSlider = CreateFrame("Slider", "LUraChatYSlider", f, "OptionsSliderTemplate")
+    chatYSlider:SetPoint("TOPLEFT", chatSlider, "BOTTOMLEFT", 0, -30)
+    chatYSlider:SetMinMaxValues(-100, 100)
+    chatYSlider:SetValueStep(0.1)
+    chatYSlider:SetObeyStepOnDrag(true)
+    chatYSlider.Low:SetText("-100")
+    chatYSlider.High:SetText("100")
+    _G[chatYSlider:GetName() .. "Text"]:SetText("Chat Y Offset")
+    chatYSlider:SetValue(LURA.db.chatOffsetY or -40)
+
+    local chatEditY = CreateFrame("EditBox", nil, f, "InputBoxTemplate")
+    chatEditY:SetSize(40, 20)
+    chatEditY:SetPoint("LEFT", chatYSlider, "RIGHT", 15, 0)
+    chatEditY:SetAutoFocus(false)
+    chatEditY:SetText(tostring(LURA.db.chatOffsetY or -40))
+    chatEditY:SetScript("OnEnterPressed", function(self)
+        local val = tonumber(self:GetText())
+        if val then chatYSlider:SetValue(val) end
+        self:ClearFocus()
+    end)
+    chatYSlider:SetScript("OnValueChanged", function(self, value)
+        local formatted = math.floor(value * 10 + 0.5) / 10
+        chatEditY:SetText(tostring(formatted))
+        LURA.db.chatOffsetY = formatted
+        if LURA.ApplyChatOffset then LURA:ApplyChatOffset() end
+    end)
+    
+    -- Chat Font Size Slider
+    local fontSlider = CreateFrame("Slider", "LUraFontSlider", f, "OptionsSliderTemplate")
+    fontSlider:SetPoint("TOPLEFT", chatYSlider, "BOTTOMLEFT", 0, -30)
+    fontSlider:SetMinMaxValues(10, 50)
+    fontSlider:SetValueStep(0.1)
+    fontSlider:SetObeyStepOnDrag(true)
+    fontSlider.Low:SetText("10")
+    fontSlider.High:SetText("50")
+    _G[fontSlider:GetName() .. "Text"]:SetText("Chat Font Size")
+    fontSlider:SetValue(LURA.db.chatFontSize or 29)
+
+    local fontEdit = CreateFrame("EditBox", nil, f, "InputBoxTemplate")
+    fontEdit:SetSize(40, 20)
+    fontEdit:SetPoint("LEFT", fontSlider, "RIGHT", 15, 0)
+    fontEdit:SetAutoFocus(false)
+    fontEdit:SetText(tostring(LURA.db.chatFontSize or 29))
+    fontEdit:SetScript("OnEnterPressed", function(self)
+        local val = tonumber(self:GetText())
+        if val then fontSlider:SetValue(val) end
+        self:ClearFocus()
+    end)
+    fontSlider:SetScript("OnValueChanged", function(self, value)
+        local formatted = math.floor(value * 10 + 0.5) / 10
+        fontEdit:SetText(tostring(formatted))
+        LURA.db.chatFontSize = formatted
+        if LURA.ApplyChatFont then LURA:ApplyChatFont() end
+    end)
+    
+    f:Show()
+    LURA.spacingPanel = f
 end
 
 function LURA:CreateDebugPanel()

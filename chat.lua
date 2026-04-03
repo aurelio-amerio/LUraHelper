@@ -1,22 +1,22 @@
 local _, LURA = ...
 
 function LURA:CreateChatPanel()
-    local f = CreateFrame("Frame", "LUraChatFrame", UIParent, "BasicFrameTemplate")
-    f:SetSize(400, 100)
-    f:SetPoint("CENTER", 0, -200)
-    f:SetMovable(true)
-    f:EnableMouse(true)
-    f:RegisterForDrag("LeftButton")
-    f:SetScript("OnDragStart", f.StartMoving)
-    f:SetScript("OnDragStop", f.StopMovingOrSizing)
+    local f = CreateFrame("Frame", "LUraChatFrame", LUraSummaryFrame)
+    f:SetSize(400, 40)
+    
+    f:SetMovable(false)
+    f:EnableMouse(false)
 
-    f.TitleText:SetText("Latest Channel /" .. (LURA.db.chatChannel or 4) .. " Message")
-
-    local MessageDisplay = f:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    MessageDisplay:SetPoint("TOPLEFT", f, "TOPLEFT", 15, -40)
-    MessageDisplay:SetWidth(370) 
+    local MessageDisplay = f:CreateFontString(nil, "OVERLAY")
+    f.MessageDisplay = MessageDisplay
+    
+    local size = LURA.db.chatFontSize or 29
+    MessageDisplay:SetFont("Interface\\AddOns\\LUraHelper\\font\\dejavu-sans-mono-bold.TTF", size, "MONOCHROME, OUTLINE")
+    -- Left edge since the drag handle is gone
+    MessageDisplay:SetPoint("LEFT", f, "LEFT", 0, 0)
+    MessageDisplay:SetPoint("RIGHT", f, "RIGHT", 0, 0)
     MessageDisplay:SetJustifyH("LEFT")
-    MessageDisplay:SetWordWrap(true)
+    MessageDisplay:SetWordWrap(false)
     MessageDisplay:SetText("Waiting for message...")
 
     local ListenerFrame = CreateFrame("Frame")
@@ -26,14 +26,9 @@ function LURA:CreateChatPanel()
         if event == "CHAT_MSG_CHANNEL" then
             local text = select(1, ...)
             local channelNumber = select(8, ...)
-            local channelName = select(9, ...)
-            
             local targetChannel = tonumber(LURA.db.chatChannel) or 4
             
             if channelNumber == targetChannel then
-                if channelName and channelName ~= "" then
-                    f.TitleText:SetText("Latest Message: " .. channelName)
-                end
                 pcall(function()
                     MessageDisplay:SetText(text)
                 end)
@@ -41,9 +36,22 @@ function LURA:CreateChatPanel()
         end
     end)
     
-    f.UpdateTitle = function(self)
-        self.TitleText:SetText("Listening to Channel /" .. (LURA.db.chatChannel or 4))
-    end
-    
     LURA.chatFrame = f
+    
+    if LURA.ApplyChatOffset then LURA:ApplyChatOffset() end
+end
+
+function LURA:ApplyChatOffset()
+    if LUraChatFrame and LUraSummaryFrame then
+        local x = LURA.db.chatOffsetX or -212
+        local y = LURA.db.chatOffsetY or -40
+        LUraChatFrame:ClearAllPoints()
+        LUraChatFrame:SetPoint("TOPLEFT", LUraSummaryFrame, "TOPRIGHT", x, y)
+    end
+end
+
+function LURA:ApplyChatFont()
+    if not LURA.chatFrame or not LURA.chatFrame.MessageDisplay then return end
+    local size = LURA.db.chatFontSize or 29
+    LURA.chatFrame.MessageDisplay:SetFont("Interface\\AddOns\\LUraHelper\\font\\dejavu-sans-mono-bold.TTF", size, "MONOCHROME, OUTLINE")
 end
