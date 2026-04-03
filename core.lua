@@ -105,6 +105,15 @@ function LURA:CreateOptionsPanel()
             LURA.db.locked = false
             LURA:ApplyLockState()
             LURA:UpdateOptionsPanel()
+        elseif cmd == "pos" then
+            if LUraSummaryFrame then
+                local point, _, _, xOfs, yOfs = LUraSummaryFrame:GetPoint()
+                print("LUra: SummaryFrame position: " .. tostring(point) .. " " .. tostring(xOfs) .. " " .. tostring(yOfs))
+            end
+            if LUraInteractiveFrame then
+                local point, _, _, xOfs, yOfs = LUraInteractiveFrame:GetPoint()
+                print("LUra: InteractiveFrame position: " .. tostring(point) .. " " .. tostring(xOfs) .. " " .. tostring(yOfs))
+            end
         else
             Settings.OpenToCategory(category:GetID())
         end
