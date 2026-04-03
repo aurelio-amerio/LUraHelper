@@ -23,6 +23,11 @@ local MARKER_TEXTURES = {
     "Interface\\TargetingFrame\\UI-RaidTargetingIcon_8", -- Skull
 }
 
+local MARKER_NAMES = {
+    "Star", "Circle", "Diamond", "Triangle", "Moon", "Square", "Cross", "Skull"
+}
+
+
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("ADDON_LOADED")
 frame:SetScript("OnEvent", function(self, event, arg1)
@@ -88,6 +93,111 @@ function LURA:CreateOptionsPanel()
     end)
     LURA.hideBtn = hideBtn
 
+    local resetPosBtn = CreateFrame("Button", "LUraResetPosBtn", panel, "UIPanelButtonTemplate")
+    resetPosBtn:SetSize(120, 22)
+    resetPosBtn:SetPoint("TOPLEFT", hideBtn, "BOTTOMLEFT", 0, -16)
+    resetPosBtn:SetText("Reset Position")
+    resetPosBtn:SetScript("OnClick", function()
+        if LUraSummaryFrame then
+            LUraSummaryFrame:ClearAllPoints()
+            LUraSummaryFrame:SetPoint("CENTER", 496, 49)
+            LUraSummaryFrame:SetUserPlaced(false)
+        end
+        if LUraInteractiveFrame then
+            LUraInteractiveFrame:ClearAllPoints()
+            LUraInteractiveFrame:SetPoint("CENTER", 496, -22)
+            LUraInteractiveFrame:SetUserPlaced(false)
+        end
+    end)
+
+    local defaultsBtn = CreateFrame("Button", "LUraRestoreDefaultsBtn", panel, "UIPanelButtonTemplate")
+    defaultsBtn:SetSize(130, 22)
+    defaultsBtn:SetPoint("LEFT", resetPosBtn, "RIGHT", 15, 0)
+    defaultsBtn:SetText("Restore Defaults")
+    defaultsBtn:SetScript("OnClick", function()
+        LURA.db.markers = {1, 2, 3, 4, 5}
+        LURA.db.locked = false
+        LURA.db.hidden = false
+        
+        if LUraSummaryFrame then
+            LUraSummaryFrame:ClearAllPoints()
+            LUraSummaryFrame:SetPoint("CENTER", 496, 49)
+            LUraSummaryFrame:SetUserPlaced(false)
+        end
+        if LUraInteractiveFrame then
+            LUraInteractiveFrame:ClearAllPoints()
+            LUraInteractiveFrame:SetPoint("CENTER", 496, -22)
+            LUraInteractiveFrame:SetUserPlaced(false)
+        end
+        
+        LURA:UpdateOptionsPanel()
+        LURA:ApplyLockState()
+        LURA:ApplyVisibility()
+        if LURA.UpdateSummaryPanelMarkers then
+            LURA:UpdateSummaryPanelMarkers()
+        end
+        
+        for i = 1, 5 do
+            local dropdown = _G["LUraMarkerDropdown" .. i]
+            if dropdown then
+                UIDropDownMenu_SetSelectedID(dropdown, LURA.db.markers[i])
+                UIDropDownMenu_SetText(dropdown, MARKER_NAMES[LURA.db.markers[i]])
+            end
+        end
+    end)
+
+    local exportBtn = CreateFrame("Button", "LUraExportBtn", panel, "UIPanelButtonTemplate")
+    exportBtn:SetSize(100, 22)
+    exportBtn:SetPoint("LEFT", defaultsBtn, "RIGHT", 15, 0)
+    exportBtn:SetText("Export")
+    exportBtn:SetScript("OnClick", function()
+        LURA:ShowImportExportWindow(true)
+    end)
+
+    local importBtn = CreateFrame("Button", "LUraImportBtn", panel, "UIPanelButtonTemplate")
+    importBtn:SetSize(100, 22)
+    importBtn:SetPoint("LEFT", exportBtn, "RIGHT", 15, 0)
+    importBtn:SetText("Import")
+    importBtn:SetScript("OnClick", function()
+        LURA:ShowImportExportWindow(false)
+    end)
+
+    local markerLabel = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    markerLabel:SetPoint("TOPLEFT", resetPosBtn, "BOTTOMLEFT", 0, -24)
+    markerLabel:SetText("Marker Symbols Sequence:")
+
+
+    for i = 1, 5 do
+        local dropdown = CreateFrame("Frame", "LUraMarkerDropdown" .. i, panel, "UIDropDownMenuTemplate")
+        if i == 1 then
+            dropdown:SetPoint("TOPLEFT", markerLabel, "BOTTOMLEFT", -15, -10)
+        else
+            dropdown:SetPoint("LEFT", _G["LUraMarkerDropdown" .. (i - 1)], "RIGHT", -15, 0)
+        end
+        
+        UIDropDownMenu_SetWidth(dropdown, 75)
+        UIDropDownMenu_Initialize(dropdown, function(self, level, menuList)
+            local info = UIDropDownMenu_CreateInfo()
+            for k, v in ipairs(MARKER_NAMES) do
+                info.text = v
+                info.arg1 = k
+                info.func = function(self, arg1)
+                    LURA.db.markers[i] = arg1
+                    UIDropDownMenu_SetSelectedID(dropdown, arg1)
+                    UIDropDownMenu_SetText(dropdown, MARKER_NAMES[arg1])
+                    if LURA.UpdateSummaryPanelMarkers then
+                        LURA:UpdateSummaryPanelMarkers()
+                    end
+                end
+                info.checked = LURA.db.markers[i] == k
+                info.icon = MARKER_TEXTURES[k]
+                UIDropDownMenu_AddButton(info)
+            end
+        end)
+        UIDropDownMenu_SetSelectedID(dropdown, LURA.db.markers[i])
+        UIDropDownMenu_SetText(dropdown, MARKER_NAMES[LURA.db.markers[i]])
+    end
+
     LURA:UpdateOptionsPanel()
 
     SLASH_LURA1 = "/lura"
@@ -129,7 +239,7 @@ end
 function LURA:CreateInteractivePanel()
     local f = CreateFrame("Frame", "LUraInteractiveFrame", UIParent)
     f:SetSize(230, 40)
-    f:SetPoint("CENTER", 0, -150)
+    f:SetPoint("CENTER", 496, -22)
     f:SetMovable(true)
     f:EnableMouse(true)
     f:RegisterForDrag("LeftButton")
@@ -189,7 +299,7 @@ end
 function LURA:CreateSummaryPanel()
     local f = CreateFrame("Frame", "LUraSummaryFrame", UIParent)
     f:SetSize(230, 80)
-    f:SetPoint("CENTER", 0, -50)
+    f:SetPoint("CENTER", 496, 49)
     f:SetMovable(true)
     f:EnableMouse(true)
     f:RegisterForDrag("LeftButton")
@@ -247,6 +357,16 @@ function LURA:UpdateSummaryPanel()
         else
             LURA.summaryBottomSlotTextures[i]:SetTexture(nil)
             LURA.summaryBottomSlotTextures[i]:SetColorTexture(0.2, 0.2, 0.2, 1)
+        end
+    end
+end
+
+function LURA:UpdateSummaryPanelMarkers()
+    if not LUraSummaryFrame then return end
+    for i = 1, 5 do
+        local dbMarkerIndex = LURA.db.markers[i] or i
+        if LURA.summaryTopSlotTextures and LURA.summaryTopSlotTextures[i] then
+            LURA.summaryTopSlotTextures[i]:SetTexture(MARKER_TEXTURES[dbMarkerIndex])
         end
     end
 end
