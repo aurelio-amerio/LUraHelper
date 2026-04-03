@@ -31,9 +31,10 @@ LURA.MARKER_NAMES = {
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("ADDON_LOADED")
 frame:RegisterEvent("PLAYER_ENTERING_WORLD")
-frame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
-frame:RegisterEvent("ENCOUNTER_START")
-frame:RegisterEvent("ENCOUNTER_END")
+-- TODO: Re-enable zone-based visibility once encounter detection is working
+-- frame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+-- frame:RegisterEvent("ENCOUNTER_START")
+-- frame:RegisterEvent("ENCOUNTER_END")
 frame:SetScript("OnEvent", function(self, event, arg1)
     if event == "ADDON_LOADED" and arg1 == addonName then
         LURA.testMode = false
@@ -77,6 +78,8 @@ frame:SetScript("OnEvent", function(self, event, arg1)
         if profile.hidden == nil then profile.hidden = false end
         if not profile.summaryPos then profile.summaryPos = { point = "CENTER", x = 496, y = 49 } end
         if not profile.interactivePos then profile.interactivePos = { point = "CENTER", x = 496, y = -22 } end
+        if not profile.summaryScale then profile.summaryScale = 1.0 end
+        if not profile.interactiveScale then profile.interactiveScale = 1.0 end
         LURA.db = profile
         
         -- Create UI
@@ -86,39 +89,45 @@ frame:SetScript("OnEvent", function(self, event, arg1)
         
         LURA:ApplyVisibility()
         LURA:ApplyLockState()
-    elseif event == "PLAYER_ENTERING_WORLD" or event == "ZONE_CHANGED_NEW_AREA" then
+        LURA:ApplyScale()
+    elseif event == "PLAYER_ENTERING_WORLD" then
         if LURA.db then
             LURA:ApplyVisibility()
         end
-    elseif event == "ENCOUNTER_START" then
-        LURA.currentEncounter = arg1
-        if LURA.db then LURA:ApplyVisibility() end
-    elseif event == "ENCOUNTER_END" then
-        LURA.currentEncounter = nil
-        if LURA.db then LURA:ApplyVisibility() end
+    -- TODO: Re-enable zone-based visibility once encounter detection is working
+    -- elseif event == "ZONE_CHANGED_NEW_AREA" then
+    --     if LURA.db then
+    --         LURA:ApplyVisibility()
+    --     end
+    -- elseif event == "ENCOUNTER_START" then
+    --     LURA.currentEncounter = arg1
+    --     if LURA.db then LURA:ApplyVisibility() end
+    -- elseif event == "ENCOUNTER_END" then
+    --     LURA.currentEncounter = nil
+    --     if LURA.db then LURA:ApplyVisibility() end
     end
 end)
 
+-- TODO: Re-enable zone-based visibility once encounter detection is working
 -- Zone & Visibility Logic
-function LURA:IsInValidZone()
-    local _, _, _, _, _, _, _, instanceMapId = GetInstanceInfo()
-    
-    -- Valid only during the Midnight Falls L'ura fight
-    local TARGET_MAP_ID = 2913
-    local TARGET_ENCOUNTER_ID = 2740
-    
-    if instanceMapId == TARGET_MAP_ID and LURA.currentEncounter == TARGET_ENCOUNTER_ID then
-        return true
-    end
-    
-    return false
-end
+-- function LURA:IsInValidZone()
+--     local _, _, _, _, _, _, _, instanceMapId = GetInstanceInfo()
+--     
+--     -- Valid only during the Midnight Falls L'ura fight
+--     local TARGET_MAP_ID = 2913
+--     local TARGET_ENCOUNTER_ID = 2740
+--     
+--     if instanceMapId == TARGET_MAP_ID and LURA.currentEncounter == TARGET_ENCOUNTER_ID then
+--         return true
+--     end
+--     
+--     return false
+-- end
 
 function LURA:ApplyVisibility()
     if not LUraInteractiveFrame or not LUraSummaryFrame then return end
     
-    local inValidZone = LURA:IsInValidZone()
-    local shouldShow = ((inValidZone or LURA.testMode) and not LURA.db.hidden)
+    local shouldShow = not LURA.db.hidden
     
     if shouldShow then
         LURA:UpdateSummaryPanel()
@@ -145,4 +154,33 @@ function LURA:ApplyLockState()
         LUraSummaryFrame:SetScript("OnDragStart", LUraSummaryFrame.StartMoving)
         LUraSummaryFrame:SetScript("OnDragStop", LUraSummaryFrame.StopMovingOrSizing)
     end
+end
+-- Helper: apply scale to a frame while keeping its visual center position
+local function SetScaleFromCenter(frame, newScale)
+    local oldScale = frame:GetScale()
+    local point, relativeTo, relativePoint, xOfs, yOfs = frame:GetPoint()
+    if not point then return end
+    
+    local width = frame:GetWidth()
+    local height = frame:GetHeight()
+    
+    -- Compute the old center in screen space
+    local oldCenterX = xOfs * oldScale + (width * oldScale) / 2
+    local oldCenterY = yOfs * oldScale + (height * oldScale) / 2
+    
+    -- Compute new offsets so the center stays in the same screen position
+    local newXOfs = (oldCenterX - (width * newScale) / 2) / newScale
+    local newYOfs = (oldCenterY - (height * newScale) / 2) / newScale
+    
+    frame:SetScale(newScale)
+    frame:ClearAllPoints()
+    frame:SetPoint(point, relativeTo, relativePoint, newXOfs, newYOfs)
+end
+
+function LURA:ApplyScale()
+    if not LUraInteractiveFrame or not LUraSummaryFrame then return end
+    local summaryScale = LURA.db.summaryScale or 1.0
+    local interactiveScale = LURA.db.interactiveScale or 1.0
+    SetScaleFromCenter(LUraSummaryFrame, summaryScale)
+    SetScaleFromCenter(LUraInteractiveFrame, interactiveScale)
 end

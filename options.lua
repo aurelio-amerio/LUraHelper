@@ -1,5 +1,63 @@
 local _, LURA = ...
 
+-- Helper: create a scale slider with a paired numeric input field
+local function CreateScaleControl(parent, label, anchorTo, dbKey)
+    local container = CreateFrame("Frame", nil, parent)
+    container:SetSize(400, 40)
+    container:SetPoint("TOPLEFT", anchorTo, "BOTTOMLEFT", 0, -16)
+
+    local sliderLabel = container:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+    sliderLabel:SetPoint("TOPLEFT", 0, 0)
+    sliderLabel:SetText(label)
+
+    local slider = CreateFrame("Slider", nil, container, "OptionsSliderTemplate")
+    slider:SetPoint("TOPLEFT", sliderLabel, "BOTTOMLEFT", 0, -4)
+    slider:SetSize(200, 16)
+    slider:SetMinMaxValues(0.01, 5)
+    slider:SetValueStep(0.01)
+    slider:SetObeyStepOnDrag(true)
+    slider.Low:SetText("0.01")
+    slider.High:SetText("5")
+
+    local editBox = CreateFrame("EditBox", nil, container, "InputBoxTemplate")
+    editBox:SetSize(50, 20)
+    editBox:SetPoint("LEFT", slider, "RIGHT", 15, 0)
+    editBox:SetAutoFocus(false)
+    editBox:SetMaxLetters(5)
+
+    -- Slider drives editBox
+    slider:SetScript("OnValueChanged", function(self, value)
+        value = math.floor(value * 100 + 0.5) / 100
+        LURA.db[dbKey] = value
+        editBox:SetText(string.format("%.2f", value))
+        LURA:ApplyScale()
+    end)
+
+    -- EditBox drives slider
+    editBox:SetScript("OnEnterPressed", function(self)
+        local val = tonumber(self:GetText())
+        if val then
+            val = math.max(0.01, math.min(5, val))
+            slider:SetValue(val)
+        end
+        self:ClearFocus()
+    end)
+    editBox:SetScript("OnEscapePressed", function(self)
+        self:SetText(string.format("%.2f", LURA.db[dbKey] or 1.0))
+        self:ClearFocus()
+    end)
+
+    container.slider = slider
+    container.editBox = editBox
+
+    -- Set initial value from DB
+    local initVal = LURA.db[dbKey] or 1.0
+    slider:SetValue(initVal)
+    editBox:SetText(string.format("%.2f", initVal))
+
+    return container
+end
+
 -- Options Panel
 function LURA:CreateOptionsPanel()
     local panel = CreateFrame("Frame", "LUraMemoryOptionsPanel", InterfaceOptionsFramePanelContainer)
@@ -26,17 +84,27 @@ function LURA:CreateOptionsPanel()
     end)
     LURA.lockBtn = lockBtn
     
-    local testCheck = CreateFrame("CheckButton", "LUraTestCheck", panel, "UICheckButtonTemplate")
-    testCheck:SetPoint("TOPLEFT", lockBtn, "BOTTOMLEFT", 0, -8)
-    _G[testCheck:GetName().."Text"]:SetText("Test Mode (Force Display)")
-    testCheck:SetScript("OnClick", function(self)
-        LURA.testMode = self:GetChecked()
+    local hideBtn = CreateFrame("CheckButton", "LUraHideCheck", panel, "UICheckButtonTemplate")
+    hideBtn:SetPoint("TOPLEFT", lockBtn, "BOTTOMLEFT", 0, -8)
+    _G[hideBtn:GetName().."Text"]:SetText("Hide Addon Panels")
+    hideBtn:SetScript("OnClick", function(self)
+        LURA.db.hidden = self:GetChecked()
         LURA:ApplyVisibility()
     end)
-    LURA.testCheck = testCheck
+    LURA.hideBtn = hideBtn
+
+    -- TODO: Re-enable Test Mode once zone-based visibility is working
+    -- local testCheck = CreateFrame("CheckButton", "LUraTestCheck", panel, "UICheckButtonTemplate")
+    -- testCheck:SetPoint("TOPLEFT", hideBtn, "BOTTOMLEFT", 0, -8)
+    -- _G[testCheck:GetName().."Text"]:SetText("Test Mode (Force Display)")
+    -- testCheck:SetScript("OnClick", function(self)
+    --     LURA.testMode = self:GetChecked()
+    --     LURA:ApplyVisibility()
+    -- end)
+    -- LURA.testCheck = testCheck
 
     local profileTitle = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-    profileTitle:SetPoint("TOPLEFT", testCheck, "BOTTOMLEFT", 0, -20)
+    profileTitle:SetPoint("TOPLEFT", hideBtn, "BOTTOMLEFT", 0, -20)
     profileTitle:SetText("Profile & Tools")
 
     -- Profile dropdown
@@ -102,35 +170,23 @@ function LURA:CreateOptionsPanel()
         StaticPopup_Show("LURA_DELETE_PROFILE", current)
     end)
 
-    local resetPosBtn = CreateFrame("Button", "LUraResetPosBtn", panel, "UIPanelButtonTemplate")
-    resetPosBtn:SetSize(120, 22)
-    resetPosBtn:SetPoint("TOPLEFT", profileDropdown, "BOTTOMLEFT", 15, -8)
-    resetPosBtn:SetText("Reset Position")
-    resetPosBtn:SetScript("OnClick", function()
-        if LUraSummaryFrame then
-            LUraSummaryFrame:ClearAllPoints()
-            LUraSummaryFrame:SetPoint("CENTER", 496, 49)
-            LUraSummaryFrame:SetUserPlaced(false)
-        end
-        if LUraInteractiveFrame then
-            LUraInteractiveFrame:ClearAllPoints()
-            LUraInteractiveFrame:SetPoint("CENTER", 496, -22)
-            LUraInteractiveFrame:SetUserPlaced(false)
-        end
-        LURA.db.summaryPos = { point = "CENTER", x = 496, y = 49 }
-        LURA.db.interactivePos = { point = "CENTER", x = 496, y = -22 }
-    end)
-
     local defaultsBtn = CreateFrame("Button", "LUraRestoreDefaultsBtn", panel, "UIPanelButtonTemplate")
     defaultsBtn:SetSize(130, 22)
-    defaultsBtn:SetPoint("LEFT", resetPosBtn, "RIGHT", 15, 0)
+    defaultsBtn:SetPoint("TOPLEFT", profileDropdown, "BOTTOMLEFT", 15, -8)
     defaultsBtn:SetText("Restore Defaults")
     defaultsBtn:SetScript("OnClick", function()
         LURA.db.markers = {1, 2, 3, 4, 5}
         LURA.db.locked = false
         LURA.db.hidden = false
+        LURA.db.summaryScale = 1.0
+        LURA.db.interactiveScale = 1.0
         LURA.testMode = false
         
+        -- Reset scale first (direct SetScale to avoid center-compensation)
+        if LUraSummaryFrame then LUraSummaryFrame:SetScale(1.0) end
+        if LUraInteractiveFrame then LUraInteractiveFrame:SetScale(1.0) end
+        
+        -- Then reset positions
         if LUraSummaryFrame then
             LUraSummaryFrame:ClearAllPoints()
             LUraSummaryFrame:SetPoint("CENTER", 496, 49)
@@ -144,6 +200,7 @@ function LURA:CreateOptionsPanel()
         LURA.db.summaryPos = { point = "CENTER", x = 496, y = 49 }
         LURA.db.interactivePos = { point = "CENTER", x = 496, y = -22 }
         
+        LURA:ApplyScale()
         LURA:RefreshAllUI()
     end)
 
@@ -164,7 +221,7 @@ function LURA:CreateOptionsPanel()
     end)
 
     local markerTitle = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-    markerTitle:SetPoint("TOPLEFT", resetPosBtn, "BOTTOMLEFT", 0, -24)
+    markerTitle:SetPoint("TOPLEFT", defaultsBtn, "BOTTOMLEFT", 0, -24)
     markerTitle:SetText("Marker Sequence Configuration")
 
     local markerLabel = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
@@ -203,6 +260,21 @@ function LURA:CreateOptionsPanel()
         UIDropDownMenu_SetText(dropdown, LURA.MARKER_NAMES[LURA.db.markers[i]])
     end
 
+    -- Scale Controls
+    local scaleTitle = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    scaleTitle:SetPoint("TOPLEFT", _G["LUraMarkerDropdown1"], "BOTTOMLEFT", 15, -16)
+    scaleTitle:SetText("Panel Scale")
+
+    local summaryScaleCtrl = CreateScaleControl(panel, "Summary Panel Scale", scaleTitle, "summaryScale")
+    LURA.summaryScaleCtrl = summaryScaleCtrl
+
+    local interactiveScaleCtrl = CreateScaleControl(panel, "Interactive Panel Scale", summaryScaleCtrl, "interactiveScale")
+    LURA.interactiveScaleCtrl = interactiveScaleCtrl
+
+    local credits = panel:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
+    credits:SetPoint("BOTTOMRIGHT", -16, 16)
+    credits:SetText("Made by Deino for Poetic Justice - Ravencrest")
+
     LURA:UpdateOptionsPanel()
 
     SLASH_LURA1 = "/lura"
@@ -212,9 +284,15 @@ function LURA:CreateOptionsPanel()
             print("|cff00ccffL'Ura Helper|r — Slash Commands:")
             print("  |cff66ff66/lura|r — Open the options panel")
             print("  |cff66ff66/lura help|r — Show this help message")
+            print("  |cff66ff66/lura toggle|r — Toggle panel visibility (hide/show)")
             print("  |cff66ff66/lura lock|r — Lock panel positions")
             print("  |cff66ff66/lura unlock|r — Unlock panel positions")
-            print("  |cff66ff66/lura test|r — Toggle Test Mode (force display outside encounter)")
+            -- TODO: Re-enable once zone-based visibility is working
+            -- print("  |cff66ff66/lura test|r — Toggle Test Mode (force display outside encounter)")
+        elseif cmd == "toggle" then
+            LURA.db.hidden = not LURA.db.hidden
+            LURA:ApplyVisibility()
+            LURA:UpdateOptionsPanel()
         elseif cmd == "lock" then
             LURA.db.locked = true
             LURA:ApplyLockState()
@@ -223,11 +301,12 @@ function LURA:CreateOptionsPanel()
             LURA.db.locked = false
             LURA:ApplyLockState()
             LURA:UpdateOptionsPanel()
-        elseif cmd == "test" then
-            LURA.testMode = not LURA.testMode
-            LURA:ApplyVisibility()
-            LURA:UpdateOptionsPanel()
-            print("LUra: Test Mode is now " .. (LURA.testMode and "ON" or "OFF"))
+        -- TODO: Re-enable once zone-based visibility is working
+        -- elseif cmd == "test" then
+        --     LURA.testMode = not LURA.testMode
+        --     LURA:ApplyVisibility()
+        --     LURA:UpdateOptionsPanel()
+        --     print("LUra: Test Mode is now " .. (LURA.testMode and "ON" or "OFF"))
         else
             Settings.OpenToCategory(category:GetID())
         end
@@ -236,8 +315,20 @@ end
 
 function LURA:UpdateOptionsPanel()
     if LURA.lockBtn then LURA.lockBtn:SetChecked(LURA.db.locked) end
-    if LURA.testCheck then LURA.testCheck:SetChecked(LURA.testMode) end
+    if LURA.hideBtn then LURA.hideBtn:SetChecked(LURA.db.hidden) end
+    -- if LURA.testCheck then LURA.testCheck:SetChecked(LURA.testMode) end
     if LURA.profileDropdown then
         UIDropDownMenu_SetText(LURA.profileDropdown, LUraHelperDB.activeProfile)
     end
+    if LURA.summaryScaleCtrl then
+        local val = LURA.db.summaryScale or 1.0
+        LURA.summaryScaleCtrl.slider:SetValue(val)
+        LURA.summaryScaleCtrl.editBox:SetText(string.format("%.2f", val))
+    end
+    if LURA.interactiveScaleCtrl then
+        local val = LURA.db.interactiveScale or 1.0
+        LURA.interactiveScaleCtrl.slider:SetValue(val)
+        LURA.interactiveScaleCtrl.editBox:SetText(string.format("%.2f", val))
+    end
 end
+
