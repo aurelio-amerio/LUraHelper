@@ -1,15 +1,16 @@
 local addonName, LURA = ...
 _G.LUraGame = LURA
 
--- Utility symbols for our UI
+-- Utility symbols for our UI (Custom Textures)
+-- NOTE: WoW textures must be .tga or .blp format with dimensions in powers of 2 (e.g., 32x32, 64x64)
 local SYMBOL_TEXTURES = {
-    "Interface\\TargetingFrame\\UI-RaidTargetingIcon_2", -- Circle
-    "Interface\\TargetingFrame\\UI-RaidTargetingIcon_7", -- Cross / X
-    "Interface\\TargetingFrame\\UI-RaidTargetingIcon_4", -- Delta / Triangle
-    "Interface\\TargetingFrame\\UI-RaidTargetingIcon_6", -- Tau / Square
-    "Interface\\TargetingFrame\\UI-RaidTargetingIcon_3", -- Diamond
+    "Interface\\AddOns\\LUraMemoryGame\\textures\\O",
+    "Interface\\AddOns\\LUraMemoryGame\\textures\\X",
+    "Interface\\AddOns\\LUraMemoryGame\\textures\\Delta",
+    "Interface\\AddOns\\LUraMemoryGame\\textures\\T",
+    "Interface\\AddOns\\LUraMemoryGame\\textures\\Diamond",
 }
-local RESET_TEXTURE = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_8" -- Skull as reset for now
+local RESET_TEXTURE = "Interface\\AddOns\\LUraMemoryGame\\textures\\Cancel"
 
 local MARKER_TEXTURES = {
     "Interface\\TargetingFrame\\UI-RaidTargetingIcon_1", -- Star
@@ -146,7 +147,7 @@ function LURA:CreateInteractivePanel()
         end)
     end
     
-    -- Reset Button
+    -- Reset / Cancel Button
     local resetBtn = CreateFrame("Button", nil, f)
     resetBtn:SetSize(30, 30)
     resetBtn:SetPoint("LEFT", f, "LEFT", 10 + 5*35, 0)
@@ -167,7 +168,7 @@ LURA.currentSequence = {}
 
 function LURA:AddSymbolToSequence(symbolIndex)
     if #LURA.currentSequence >= 5 then return end
-    table.insert(LURA.currentSequence, SYMBOL_TEXTURES[symbolIndex])
+    table.insert(LURA.currentSequence, symbolIndex)
     LURA:UpdateSummaryPanel()
 end
 
@@ -202,6 +203,8 @@ function LURA:CreateSummaryPanel()
         LURA.summaryTopSlotTextures[i] = topIcon
     end
     
+    LURA.summaryBottomSlotTextures = {}
+    
     for i = 1, 5 do
         local btmIcon = f:CreateTexture(nil, "ARTWORK")
         btmIcon:SetSize(30, 30)
@@ -209,14 +212,29 @@ function LURA:CreateSummaryPanel()
         btmIcon:SetColorTexture(0.2, 0.2, 0.2, 1)
         LURA.summaryBottomSlotTextures[i] = btmIcon
     end
+    
+    local resetBtn = CreateFrame("Button", nil, f)
+    resetBtn:SetSize(30, 30)
+    resetBtn:SetPoint("TOPLEFT", f, "TOPLEFT", 10 + 5*35, -45)
+    
+    local resetIcon = resetBtn:CreateTexture(nil, "ARTWORK")
+    resetIcon:SetAllPoints()
+    resetIcon:SetTexture(RESET_TEXTURE)
+    
+    resetBtn:SetScript("OnClick", function()
+        if LURA.ResetSequence then
+            LURA:ResetSequence()
+        end
+    end)
 end
 
 function LURA:UpdateSummaryPanel()
     if not LUraSummaryFrame then return end
     for i = 1, 5 do
         if LURA.currentSequence[i] then
-            LURA.summaryBottomSlotTextures[i]:SetTexture(LURA.currentSequence[i])
-            LURA.summaryBottomSlotTextures[i]:SetColorTexture(1, 1, 1, 1)
+            local idx = LURA.currentSequence[i]
+            LURA.summaryBottomSlotTextures[i]:SetTexture(SYMBOL_TEXTURES[idx])
+            LURA.summaryBottomSlotTextures[i]:SetVertexColor(1, 1, 1, 1)
         else
             LURA.summaryBottomSlotTextures[i]:SetTexture(nil)
             LURA.summaryBottomSlotTextures[i]:SetColorTexture(0.2, 0.2, 0.2, 1)
