@@ -40,8 +40,8 @@ frame:SetScript("OnEvent", function(self, event, arg1)
         -- Task 3: Create Interactive Panel
         LURA:CreateInteractivePanel()
         
-        -- Task 4 Setup (Placeholder)
-        -- LURA:CreateSummaryPanel()
+        -- Task 4 Setup
+        LURA:CreateSummaryPanel()
     end
 end)
 
@@ -113,4 +113,66 @@ function LURA:CreateInteractivePanel()
             LURA:ResetSequence()
         end
     end)
+end
+
+-- Task 4: Summary Panel & Logic
+LURA.currentSequence = {}
+
+function LURA:AddSymbolToSequence(symbolIndex)
+    if #LURA.currentSequence >= 5 then return end
+    table.insert(LURA.currentSequence, SYMBOL_TEXTURES[symbolIndex])
+    LURA:UpdateSummaryPanel()
+end
+
+function LURA:ResetSequence()
+    LURA.currentSequence = {}
+    LURA:UpdateSummaryPanel()
+end
+
+function LURA:CreateSummaryPanel()
+    local f = CreateFrame("Frame", "LUraSummaryFrame", UIParent)
+    f:SetSize(230, 80)
+    f:SetPoint("CENTER", 0, -50)
+    f:SetMovable(true)
+    f:EnableMouse(true)
+    f:RegisterForDrag("LeftButton")
+    f:SetScript("OnDragStart", f.StartMoving)
+    f:SetScript("OnDragStop", f.StopMovingOrSizing)
+    
+    local tex = f:CreateTexture(nil, "BACKGROUND")
+    tex:SetAllPoints()
+    tex:SetColorTexture(0, 0, 0, 0.7)
+    
+    LURA.summaryTopSlotTextures = {}
+    LURA.summaryBottomSlotTextures = {}
+    
+    for i = 1, 5 do
+        local topIcon = f:CreateTexture(nil, "ARTWORK")
+        topIcon:SetSize(30, 30)
+        topIcon:SetPoint("TOPLEFT", f, "TOPLEFT", 10 + (i-1)*35, -10)
+        local dbMarkerIndex = LURA.db.markers[i] or i
+        topIcon:SetTexture(MARKER_TEXTURES[dbMarkerIndex])
+        LURA.summaryTopSlotTextures[i] = topIcon
+    end
+    
+    for i = 1, 5 do
+        local btmIcon = f:CreateTexture(nil, "ARTWORK")
+        btmIcon:SetSize(30, 30)
+        btmIcon:SetPoint("TOPLEFT", f, "TOPLEFT", 10 + (i-1)*35, -45)
+        btmIcon:SetColorTexture(0.2, 0.2, 0.2, 1)
+        LURA.summaryBottomSlotTextures[i] = btmIcon
+    end
+end
+
+function LURA:UpdateSummaryPanel()
+    if not LUraSummaryFrame then return end
+    for i = 1, 5 do
+        if LURA.currentSequence[i] then
+            LURA.summaryBottomSlotTextures[i]:SetTexture(LURA.currentSequence[i])
+            LURA.summaryBottomSlotTextures[i]:SetColorTexture(1, 1, 1, 1)
+        else
+            LURA.summaryBottomSlotTextures[i]:SetTexture(nil)
+            LURA.summaryBottomSlotTextures[i]:SetColorTexture(0.2, 0.2, 0.2, 1)
+        end
+    end
 end
