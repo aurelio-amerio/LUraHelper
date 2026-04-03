@@ -27,11 +27,15 @@ frame:RegisterEvent("ADDON_LOADED")
 frame:SetScript("OnEvent", function(self, event, arg1)
     if event == "ADDON_LOADED" and arg1 == addonName then
         -- Task 1: Init Database
-        if not LUraMemoryGameDB then
+        if type(LUraMemoryGameDB) ~= "table" then
             LUraMemoryGameDB = {
-                markers = {1, 2, 3, 4, 5} -- Default to first 5 markers
+                markers = {1, 2, 3, 4, 5},
+                locked = false,
+                hidden = false
             }
         end
+        if LUraMemoryGameDB.locked == nil then LUraMemoryGameDB.locked = false end
+        if LUraMemoryGameDB.hidden == nil then LUraMemoryGameDB.hidden = false end
         LURA.db = LUraMemoryGameDB
         
         -- Task 2: Create Options
@@ -42,6 +46,9 @@ frame:SetScript("OnEvent", function(self, event, arg1)
         
         -- Task 4 Setup
         LURA:CreateSummaryPanel()
+        
+        LURA:ApplyVisibility()
+        LURA:ApplyLockState()
     end
 end)
 
@@ -62,10 +69,50 @@ function LURA:CreateOptionsPanel()
     Settings.RegisterAddOnCategory(category)
     LURA.optionsCategory = category
 
+    local lockBtn = CreateFrame("CheckButton", "LUraLockCheck", panel, "UICheckButtonTemplate")
+    lockBtn:SetPoint("TOPLEFT", desc, "BOTTOMLEFT", 0, -16)
+    _G[lockBtn:GetName().."Text"]:SetText("Lock Addon Frames")
+    lockBtn:SetScript("OnClick", function(self)
+        LURA.db.locked = self:GetChecked()
+        LURA:ApplyLockState()
+    end)
+    LURA.lockBtn = lockBtn
+    
+    local hideBtn = CreateFrame("CheckButton", "LUraHideCheck", panel, "UICheckButtonTemplate")
+    hideBtn:SetPoint("TOPLEFT", lockBtn, "BOTTOMLEFT", 0, -8)
+    _G[hideBtn:GetName().."Text"]:SetText("Hide Addon Panels")
+    hideBtn:SetScript("OnClick", function(self)
+        LURA.db.hidden = self:GetChecked()
+        LURA:ApplyVisibility()
+    end)
+    LURA.hideBtn = hideBtn
+
+    LURA:UpdateOptionsPanel()
+
     SLASH_LURA1 = "/lura"
     SlashCmdList["LURA"] = function(msg)
-        Settings.OpenToCategory(category:GetID())
+        local cmd = string.lower(strtrim(msg or ""))
+        if cmd == "toggle" then
+            LURA.db.hidden = not LURA.db.hidden
+            LURA:ApplyVisibility()
+            LURA:UpdateOptionsPanel()
+        elseif cmd == "lock" then
+            LURA.db.locked = true
+            LURA:ApplyLockState()
+            LURA:UpdateOptionsPanel()
+        elseif cmd == "unlock" then
+            LURA.db.locked = false
+            LURA:ApplyLockState()
+            LURA:UpdateOptionsPanel()
+        else
+            Settings.OpenToCategory(category:GetID())
+        end
     end
+end
+
+function LURA:UpdateOptionsPanel()
+    if LURA.lockBtn then LURA.lockBtn:SetChecked(LURA.db.locked) end
+    if LURA.hideBtn then LURA.hideBtn:SetChecked(LURA.db.hidden) end
 end
 
 -- Task 3: Interactive Panel
@@ -174,5 +221,33 @@ function LURA:UpdateSummaryPanel()
             LURA.summaryBottomSlotTextures[i]:SetTexture(nil)
             LURA.summaryBottomSlotTextures[i]:SetColorTexture(0.2, 0.2, 0.2, 1)
         end
+    end
+end
+
+function LURA:ApplyVisibility()
+    if not LUraInteractiveFrame or not LUraSummaryFrame then return end
+    if LURA.db.hidden then
+        LUraInteractiveFrame:Hide()
+        LUraSummaryFrame:Hide()
+    else
+        LUraInteractiveFrame:Show()
+        LUraSummaryFrame:Show()
+    end
+end
+
+function LURA:ApplyLockState()
+    if not LUraInteractiveFrame or not LUraSummaryFrame then return end
+    local locked = LURA.db.locked
+    
+    if locked then
+        LUraInteractiveFrame:SetScript("OnDragStart", nil)
+        LUraInteractiveFrame:SetScript("OnDragStop", nil)
+        LUraSummaryFrame:SetScript("OnDragStart", nil)
+        LUraSummaryFrame:SetScript("OnDragStop", nil)
+    else
+        LUraInteractiveFrame:SetScript("OnDragStart", LUraInteractiveFrame.StartMoving)
+        LUraInteractiveFrame:SetScript("OnDragStop", LUraInteractiveFrame.StopMovingOrSizing)
+        LUraSummaryFrame:SetScript("OnDragStart", LUraSummaryFrame.StartMoving)
+        LUraSummaryFrame:SetScript("OnDragStop", LUraSummaryFrame.StopMovingOrSizing)
     end
 end
