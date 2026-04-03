@@ -2,12 +2,7 @@ local addonName, LURA = ...
 _G.LUraGame = LURA
 
 -- Shared constants (used by other files via LURA namespace)
-LURA.SYMBOL_TEXTURES = {
-    "Interface\\AddOns\\LUraHelper\\textures\\O",
-    "Interface\\AddOns\\LUraHelper\\textures\\X",
-    "Interface\\AddOns\\LUraHelper\\textures\\Delta",
-    "Interface\\AddOns\\LUraHelper\\textures\\T",
-}
+
 LURA.SYMBOL_TEXTS = {
     "●",
     "x",
@@ -15,7 +10,7 @@ LURA.SYMBOL_TEXTS = {
     "T",
     "◆",
 }
-LURA.RESET_TEXTURE = "Interface\\AddOns\\LUraHelper\\textures\\Cancel"
+
 
 LURA.MARKER_TEXTURES = {
     "Interface\\TargetingFrame\\UI-RaidTargetingIcon_1", -- Star
