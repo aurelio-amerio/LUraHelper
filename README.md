@@ -2,8 +2,7 @@
 
 A World of Warcraft addon for tracking symbol sequences against raid markers during the L'Ura encounter in Midnight Falls.
 
-<!-- <img src="interface.jpg" alt="Interface" width=600> -->
-![Interface](interface.jpg)
+<img src="interface.jpg" alt="Interface" width=600>
 
 ## Features
 
