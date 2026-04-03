@@ -95,7 +95,7 @@ frame:SetScript("OnEvent", function(self, event, arg1)
                 markers = {1, 2, 3, 4, 5},
                 locked = false,
                 hidden = false,
-                hideInteractive = false,
+                hideInteractive = true,
                 chatChannel = 4,
                 chatFontSize = 29,
                 boxSpacing = 36,
@@ -111,7 +111,7 @@ frame:SetScript("OnEvent", function(self, event, arg1)
         local profile = LUraHelperDB.profiles[LUraHelperDB.activeProfile]
         if profile.locked == nil then profile.locked = false end
         if profile.hidden == nil then profile.hidden = false end
-        if profile.hideInteractive == nil then profile.hideInteractive = false end
+        if profile.hideInteractive == nil then profile.hideInteractive = true end
         if profile.chatChannel == nil then profile.chatChannel = 4 end
         if profile.chatFontSize == nil then profile.chatFontSize = 29 end
         if profile.boxSpacing == nil then profile.boxSpacing = 36 end
