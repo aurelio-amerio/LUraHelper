@@ -37,7 +37,7 @@ function LURA:ExportConfig()
     local ip1, _, ip2, ix, iy = LUraInteractiveFrame:GetPoint()
     
     local xml = "<LUraConfig>\n"
-    xml = xml .. string.format("  <profileName>%s</profileName>\n", LUraMemoryGameDB.activeProfile)
+    xml = xml .. string.format("  <profileName>%s</profileName>\n", LUraHelperDB.activeProfile)
     xml = xml .. string.format("  <markers>%s</markers>\n", table.concat(LURA.db.markers, ","))
     xml = xml .. string.format("  <locked>%s</locked>\n", tostring(LURA.db.locked))
     xml = xml .. string.format("  <hidden>%s</hidden>\n", tostring(LURA.db.hidden))
@@ -74,7 +74,7 @@ function LURA:ApplyImportedConfig(xml, targetProfileName)
     profileData.hidden = hiddenStr and (hiddenStr == "true" or hiddenStr == "1") or false
     
     -- Save profile and switch
-    LUraMemoryGameDB.profiles[targetProfileName] = profileData
+    LUraHelperDB.profiles[targetProfileName] = profileData
     LURA:SwitchProfile(targetProfileName)
     
     -- Apply frame positions
@@ -108,7 +108,7 @@ function LURA:ImportConfig(encodedXML)
     
     -- Ask the user for the target profile name
     LURA:ShowProfileNameDialog(function(targetName)
-        if LUraMemoryGameDB.profiles[targetName] then
+        if LUraHelperDB.profiles[targetName] then
             -- Profile exists — ask for overwrite confirmation
             LURA:ShowOverwriteConfirmDialog(targetName, function()
                 LURA:ApplyImportedConfig(xml, targetName)

@@ -3,11 +3,11 @@ local _, LURA = ...
 -- Options Panel
 function LURA:CreateOptionsPanel()
     local panel = CreateFrame("Frame", "LUraMemoryOptionsPanel", InterfaceOptionsFramePanelContainer)
-    panel.name = "L'Ura Memory Game"
+    panel.name = "L'Ura Helper"
     
     local title = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
     title:SetPoint("TOPLEFT", 16, -16)
-    title:SetText("L'Ura Memory Game Options")
+    title:SetText("L'Ura Helper Options")
     
     local category = Settings.RegisterCanvasLayoutCategory(panel, panel.name)
     Settings.RegisterAddOnCategory(category)
@@ -26,17 +26,8 @@ function LURA:CreateOptionsPanel()
     end)
     LURA.lockBtn = lockBtn
     
-    local hideBtn = CreateFrame("CheckButton", "LUraHideCheck", panel, "UICheckButtonTemplate")
-    hideBtn:SetPoint("TOPLEFT", lockBtn, "BOTTOMLEFT", 0, -8)
-    _G[hideBtn:GetName().."Text"]:SetText("Hide Addon Panels")
-    hideBtn:SetScript("OnClick", function(self)
-        LURA.db.hidden = self:GetChecked()
-        LURA:ApplyVisibility()
-    end)
-    LURA.hideBtn = hideBtn
-
     local testCheck = CreateFrame("CheckButton", "LUraTestCheck", panel, "UICheckButtonTemplate")
-    testCheck:SetPoint("TOPLEFT", hideBtn, "BOTTOMLEFT", 0, -8)
+    testCheck:SetPoint("TOPLEFT", lockBtn, "BOTTOMLEFT", 0, -8)
     _G[testCheck:GetName().."Text"]:SetText("Test Mode (Force Display)")
     testCheck:SetScript("OnClick", function(self)
         LURA.testMode = self:GetChecked()
@@ -61,11 +52,11 @@ function LURA:CreateOptionsPanel()
             info.func = function(self, arg1)
                 LURA:SwitchProfile(arg1)
             end
-            info.checked = (LUraMemoryGameDB.activeProfile == name)
+            info.checked = (LUraHelperDB.activeProfile == name)
             UIDropDownMenu_AddButton(info)
         end
     end)
-    UIDropDownMenu_SetText(profileDropdown, LUraMemoryGameDB.activeProfile)
+    UIDropDownMenu_SetText(profileDropdown, LUraHelperDB.activeProfile)
     LURA.profileDropdown = profileDropdown
 
     -- New Profile button
@@ -75,7 +66,7 @@ function LURA:CreateOptionsPanel()
     newProfileBtn:SetText("New")
     newProfileBtn:SetScript("OnClick", function()
         LURA:ShowProfileNameDialog(function(name)
-            if LUraMemoryGameDB.profiles[name] then
+            if LUraHelperDB.profiles[name] then
                 LURA:ShowOverwriteConfirmDialog(name, function()
                     LURA:CreateNewProfile(name)
                 end)
@@ -91,7 +82,7 @@ function LURA:CreateOptionsPanel()
     delProfileBtn:SetPoint("LEFT", newProfileBtn, "RIGHT", 5, 0)
     delProfileBtn:SetText("Delete")
     delProfileBtn:SetScript("OnClick", function()
-        local current = LUraMemoryGameDB.activeProfile
+        local current = LUraHelperDB.activeProfile
         if current == "Default" then
             print("LUra: Cannot delete the Default profile.")
             return
@@ -217,10 +208,13 @@ function LURA:CreateOptionsPanel()
     SLASH_LURA1 = "/lura"
     SlashCmdList["LURA"] = function(msg)
         local cmd = string.lower(strtrim(msg or ""))
-        if cmd == "toggle" then
-            LURA.db.hidden = not LURA.db.hidden
-            LURA:ApplyVisibility()
-            LURA:UpdateOptionsPanel()
+        if cmd == "help" then
+            print("|cff00ccffL'Ura Helper|r — Slash Commands:")
+            print("  |cff66ff66/lura|r — Open the options panel")
+            print("  |cff66ff66/lura help|r — Show this help message")
+            print("  |cff66ff66/lura lock|r — Lock panel positions")
+            print("  |cff66ff66/lura unlock|r — Unlock panel positions")
+            print("  |cff66ff66/lura test|r — Toggle Test Mode (force display outside encounter)")
         elseif cmd == "lock" then
             LURA.db.locked = true
             LURA:ApplyLockState()
@@ -234,23 +228,6 @@ function LURA:CreateOptionsPanel()
             LURA:ApplyVisibility()
             LURA:UpdateOptionsPanel()
             print("LUra: Test Mode is now " .. (LURA.testMode and "ON" or "OFF"))
-        elseif cmd == "pos" then
-            if LUraSummaryFrame then
-                local point, _, _, xOfs, yOfs = LUraSummaryFrame:GetPoint()
-                print("LUra: SummaryFrame position: " .. tostring(point) .. " " .. tostring(xOfs) .. " " .. tostring(yOfs))
-            end
-            if LUraInteractiveFrame then
-                local point, _, _, xOfs, yOfs = LUraInteractiveFrame:GetPoint()
-                print("LUra: InteractiveFrame position: " .. tostring(point) .. " " .. tostring(xOfs) .. " " .. tostring(yOfs))
-            end
-        elseif cmd == "info" then
-            local _, _, _, _, _, _, _, instanceMapId = GetInstanceInfo()
-            print("LUra: Current Instance Map ID: " .. tostring(instanceMapId))
-            if LURA.currentEncounter then
-                print("LUra: Current Encounter ID: " .. tostring(LURA.currentEncounter))
-            else
-                print("LUra: No encounter in progress.")
-            end
         else
             Settings.OpenToCategory(category:GetID())
         end
@@ -259,9 +236,8 @@ end
 
 function LURA:UpdateOptionsPanel()
     if LURA.lockBtn then LURA.lockBtn:SetChecked(LURA.db.locked) end
-    if LURA.hideBtn then LURA.hideBtn:SetChecked(LURA.db.hidden) end
     if LURA.testCheck then LURA.testCheck:SetChecked(LURA.testMode) end
     if LURA.profileDropdown then
-        UIDropDownMenu_SetText(LURA.profileDropdown, LUraMemoryGameDB.activeProfile)
+        UIDropDownMenu_SetText(LURA.profileDropdown, LUraHelperDB.activeProfile)
     end
 end

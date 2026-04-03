@@ -3,13 +3,13 @@ _G.LUraGame = LURA
 
 -- Shared constants (used by other files via LURA namespace)
 LURA.SYMBOL_TEXTURES = {
-    "Interface\\AddOns\\LUraMemoryGame\\textures\\O",
-    "Interface\\AddOns\\LUraMemoryGame\\textures\\X",
-    "Interface\\AddOns\\LUraMemoryGame\\textures\\Delta",
-    "Interface\\AddOns\\LUraMemoryGame\\textures\\T",
-    "Interface\\AddOns\\LUraMemoryGame\\textures\\Diamond",
+    "Interface\\AddOns\\LUraHelper\\textures\\O",
+    "Interface\\AddOns\\LUraHelper\\textures\\X",
+    "Interface\\AddOns\\LUraHelper\\textures\\Delta",
+    "Interface\\AddOns\\LUraHelper\\textures\\T",
+    "Interface\\AddOns\\LUraHelper\\textures\\Diamond",
 }
-LURA.RESET_TEXTURE = "Interface\\AddOns\\LUraMemoryGame\\textures\\Cancel"
+LURA.RESET_TEXTURE = "Interface\\AddOns\\LUraHelper\\textures\\Cancel"
 
 LURA.MARKER_TEXTURES = {
     "Interface\\TargetingFrame\\UI-RaidTargetingIcon_1", -- Star
@@ -38,33 +38,33 @@ frame:SetScript("OnEvent", function(self, event, arg1)
     if event == "ADDON_LOADED" and arg1 == addonName then
         LURA.testMode = false
         -- Init Database (with profile migration)
-        if type(LUraMemoryGameDB) ~= "table" then
-            LUraMemoryGameDB = {}
+        if type(LUraHelperDB) ~= "table" then
+            LUraHelperDB = {}
         end
         -- Migrate flat DB → profiles structure
-        if not LUraMemoryGameDB.profiles then
+        if not LUraHelperDB.profiles then
             local oldData = {
-                markers = LUraMemoryGameDB.markers or {1, 2, 3, 4, 5},
-                locked = LUraMemoryGameDB.locked or false,
-                hidden = LUraMemoryGameDB.hidden or false,
+                markers = LUraHelperDB.markers or {1, 2, 3, 4, 5},
+                locked = LUraHelperDB.locked or false,
+                hidden = LUraHelperDB.hidden or false,
                 summaryPos = { point = "CENTER", x = 496, y = 49 },
                 interactivePos = { point = "CENTER", x = 496, y = -22 },
             }
-            LUraMemoryGameDB = {
+            LUraHelperDB = {
                 activeProfile = "Default",
                 profiles = {
                     ["Default"] = oldData,
                 },
             }
         end
-        if not LUraMemoryGameDB.activeProfile then
-            LUraMemoryGameDB.activeProfile = "Default"
+        if not LUraHelperDB.activeProfile then
+            LUraHelperDB.activeProfile = "Default"
         end
-        if not LUraMemoryGameDB.profiles[LUraMemoryGameDB.activeProfile] then
-            LUraMemoryGameDB.activeProfile = "Default"
+        if not LUraHelperDB.profiles[LUraHelperDB.activeProfile] then
+            LUraHelperDB.activeProfile = "Default"
         end
-        if not LUraMemoryGameDB.profiles["Default"] then
-            LUraMemoryGameDB.profiles["Default"] = {
+        if not LUraHelperDB.profiles["Default"] then
+            LUraHelperDB.profiles["Default"] = {
                 markers = {1, 2, 3, 4, 5},
                 locked = false,
                 hidden = false,
@@ -72,7 +72,7 @@ frame:SetScript("OnEvent", function(self, event, arg1)
                 interactivePos = { point = "CENTER", x = 496, y = -22 },
             }
         end
-        local profile = LUraMemoryGameDB.profiles[LUraMemoryGameDB.activeProfile]
+        local profile = LUraHelperDB.profiles[LUraHelperDB.activeProfile]
         if profile.locked == nil then profile.locked = false end
         if profile.hidden == nil then profile.hidden = false end
         if not profile.summaryPos then profile.summaryPos = { point = "CENTER", x = 496, y = 49 } end

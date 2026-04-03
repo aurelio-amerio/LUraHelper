@@ -1,9 +1,9 @@
 ## Interface: 120000, 120001, 120005
-## Title: L'Ura Memory Game
+## Title: L'Ura Helper
 ## Notes: Track a sequence of 5 symbols against 5 target raid markers.
 ## Author: Deino
 ## Version: 1.1.0
-## SavedVariables: LUraMemoryGameDB
+## SavedVariables: LUraHelperDB
 
 core.lua
 profiles.lua

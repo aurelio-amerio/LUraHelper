@@ -4,7 +4,7 @@ local _, LURA = ...
 
 function LURA:GetProfileNames()
     local names = {}
-    for name in pairs(LUraMemoryGameDB.profiles) do
+    for name in pairs(LUraHelperDB.profiles) do
         table.insert(names, name)
     end
     table.sort(names, function(a, b)
@@ -54,11 +54,11 @@ function LURA:ApplyProfilePositions()
 end
 
 function LURA:SwitchProfile(name)
-    if not LUraMemoryGameDB.profiles[name] then return end
+    if not LUraHelperDB.profiles[name] then return end
     -- Save current frame positions before switching
     LURA:SaveCurrentPositions()
-    LUraMemoryGameDB.activeProfile = name
-    LURA.db = LUraMemoryGameDB.profiles[name]
+    LUraHelperDB.activeProfile = name
+    LURA.db = LUraHelperDB.profiles[name]
     LURA:ApplyProfilePositions()
     LURA:RefreshAllUI()
 end
@@ -67,7 +67,7 @@ function LURA:CreateNewProfile(name)
     if not name or name == "" then return false end
     -- Capture current positions before copying
     LURA:SaveCurrentPositions()
-    LUraMemoryGameDB.profiles[name] = LURA:DeepCopyProfile(LURA.db)
+    LUraHelperDB.profiles[name] = LURA:DeepCopyProfile(LURA.db)
     LURA:SwitchProfile(name)
     return true
 end
@@ -77,9 +77,9 @@ function LURA:DeleteProfile(name)
         print("LUra: Cannot delete the Default profile.")
         return false
     end
-    if not LUraMemoryGameDB.profiles[name] then return false end
-    LUraMemoryGameDB.profiles[name] = nil
-    if LUraMemoryGameDB.activeProfile == name then
+    if not LUraHelperDB.profiles[name] then return false end
+    LUraHelperDB.profiles[name] = nil
+    if LUraHelperDB.activeProfile == name then
         LURA:SwitchProfile("Default")
     end
     return true
