@@ -43,8 +43,8 @@ end
 
 function LURA:ApplyChatOffset()
     if LUraChatFrame and LUraSummaryFrame then
-        local x = LURA.db.chatOffsetX or -210
-        local y = LURA.db.chatOffsetY or -40
+        local x = LURA.db.chatOffsetX or -175
+        local y = LURA.db.chatOffsetY or -35
         LUraChatFrame:ClearAllPoints()
         LUraChatFrame:SetPoint("TOPLEFT", LUraSummaryFrame, "TOPRIGHT", x, y)
     end

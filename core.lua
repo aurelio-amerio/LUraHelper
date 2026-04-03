@@ -7,7 +7,13 @@ LURA.SYMBOL_TEXTURES = {
     "Interface\\AddOns\\LUraHelper\\textures\\X",
     "Interface\\AddOns\\LUraHelper\\textures\\Delta",
     "Interface\\AddOns\\LUraHelper\\textures\\T",
-    "Interface\\AddOns\\LUraHelper\\textures\\Diamond",
+}
+LURA.SYMBOL_TEXTS = {
+    "●",
+    "x",
+    "▼",
+    "T",
+    "◆",
 }
 LURA.RESET_TEXTURE = "Interface\\AddOns\\LUraHelper\\textures\\Cancel"
 
@@ -93,8 +99,8 @@ frame:SetScript("OnEvent", function(self, event, arg1)
                 chatFontSize = 29.5,
                 boxSpacing = 36,
                 boxPadding = 6,
-                chatOffsetX = -210,
-                chatOffsetY = -40,
+                chatOffsetX = -175,
+                chatOffsetY = -35,
                 summaryPos = { point = "CENTER", x = 496, y = 49 },
                 interactivePos = { point = "CENTER", x = 496, y = -22 },
             }
@@ -106,8 +112,8 @@ frame:SetScript("OnEvent", function(self, event, arg1)
         if profile.chatFontSize == nil then profile.chatFontSize = 29.5 end
         if profile.boxSpacing == nil then profile.boxSpacing = 36 end
         if profile.boxPadding == nil then profile.boxPadding = 6 end
-        if profile.chatOffsetX == nil then profile.chatOffsetX = -210 end
-        if profile.chatOffsetY == nil then profile.chatOffsetY = -40 end
+        if profile.chatOffsetX == nil then profile.chatOffsetX = -175 end
+        if profile.chatOffsetY == nil then profile.chatOffsetY = -35 end
         if not profile.summaryPos then profile.summaryPos = { point = "CENTER", x = 496, y = 49 } end
         if not profile.interactivePos then profile.interactivePos = { point = "CENTER", x = 496, y = -22 } end
         if not profile.summaryScale then profile.summaryScale = 1.0 end

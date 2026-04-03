@@ -3,7 +3,7 @@ local _, LURA = ...
 -- Interactive Panel
 function LURA:CreateInteractivePanel()
     local f = CreateFrame("Frame", "LUraInteractiveFrame", UIParent)
-    f:SetSize(230, 40)
+    f:SetSize(230, 115)
     f:SetPoint("CENTER", 496, -22)
     f:SetMovable(true)
     f:EnableMouse(true)
@@ -16,38 +16,85 @@ function LURA:CreateInteractivePanel()
     tex:SetColorTexture(0, 0, 0, 0.7)
     
     LURA.interactiveBtns = {}
+    LURA.interactiveBottomSlotBgs = {}
+    LURA.interactiveBottomSlotTexts = {}
+    
     for i = 1, 5 do
+        -- Row 1: Clickable buttons
         local btn = CreateFrame("Button", nil, f)
         btn:SetSize(30, 30)
-        btn:SetPoint("LEFT", f, "LEFT", 10 + (i-1)*35, 0)
         LURA.interactiveBtns[i] = btn
         
-        local icon = btn:CreateTexture(nil, "BACKGROUND")
-        icon:SetAllPoints()
-        icon:SetTexture(LURA.SYMBOL_TEXTURES[i])
+        local btnBg = btn:CreateTexture(nil, "BACKGROUND")
+        btnBg:SetAllPoints()
+        btnBg:SetColorTexture(0.1, 0.1, 0.1, 1)
+        
+        local text = btn:CreateFontString(nil, "OVERLAY")
+        text:SetFont("Interface\\AddOns\\LUraHelper\\font\\dejavu-sans-mono-bold.TTF", 22, "OUTLINE")
+        text:SetAllPoints()
+        text:SetText(LURA.SYMBOL_TEXTS[i])
+        text:SetTextColor(0.4, 0.6, 1)
         
         btn:SetScript("OnClick", function()
             if LURA.AddSymbolToSequence then
                 LURA:AddSymbolToSequence(i)
             end
         end)
+        btn:SetScript("OnEnter", function() btnBg:SetColorTexture(0.3, 0.3, 0.3, 1) end)
+        btn:SetScript("OnLeave", function() btnBg:SetColorTexture(0.1, 0.1, 0.1, 1) end)
+        
+        -- Row 2: Sequence display slots
+        local btmBg = f:CreateTexture(nil, "BACKGROUND")
+        btmBg:SetSize(30, 30)
+        btmBg:SetColorTexture(0.1, 0.1, 0.1, 1)
+        LURA.interactiveBottomSlotBgs[i] = btmBg
+
+        local btmText = f:CreateFontString(nil, "OVERLAY")
+        btmText:SetFont("Interface\\AddOns\\LUraHelper\\font\\dejavu-sans-mono-bold.TTF", 22, "OUTLINE")
+        btmText:SetAllPoints(btmBg)
+        btmText:SetTextColor(0.4, 0.6, 1)
+        btmText:SetText(".")
+        LURA.interactiveBottomSlotTexts[i] = btmText
     end
     
     -- Reset / Cancel Button
     local resetBtn = CreateFrame("Button", nil, f)
-    resetBtn:SetSize(30, 30)
-    resetBtn:SetPoint("LEFT", f, "LEFT", 10 + 5*35, 0)
+    local resetBg = resetBtn:CreateTexture(nil, "BACKGROUND")
+    resetBg:SetAllPoints()
+    resetBg:SetColorTexture(0.1, 0.1, 0.1, 1)
     LURA.interactiveResetBtn = resetBtn
     
-    local resetIcon = resetBtn:CreateTexture(nil, "BACKGROUND")
-    resetIcon:SetAllPoints()
-    resetIcon:SetTexture(LURA.RESET_TEXTURE)
+    local resetText = resetBtn:CreateFontString(nil, "OVERLAY")
+    resetText:SetFont("Interface\\AddOns\\LUraHelper\\font\\dejavu-sans-mono-bold.TTF", 22, "OUTLINE")
+    resetText:SetAllPoints()
+    resetText:SetText("|cffff0000Ø|r")
     
     resetBtn:SetScript("OnClick", function()
         if LURA.ResetSequence then
             LURA:ResetSequence()
         end
     end)
+    resetBtn:SetScript("OnEnter", function() resetBg:SetColorTexture(0.3, 0.3, 0.3, 1) end)
+    resetBtn:SetScript("OnLeave", function() resetBg:SetColorTexture(0.1, 0.1, 0.1, 1) end)
+    
+    -- Row 3: Send to Chat Button
+    local sendBtn = CreateFrame("Button", nil, f)
+    local sendBg = sendBtn:CreateTexture(nil, "BACKGROUND")
+    sendBg:SetAllPoints()
+    sendBg:SetColorTexture(0.1, 0.1, 0.1, 1)
+    
+    local sendText = sendBtn:CreateFontString(nil, "OVERLAY")
+    sendText:SetFont("Interface\\AddOns\\LUraHelper\\font\\dejavu-sans-mono-bold.TTF", 22, "OUTLINE")
+    sendText:SetAllPoints()
+    sendText:SetText("➤")
+    sendText:SetTextColor(1, 1, 1)
+    
+    sendBtn:SetScript("OnClick", function()
+        if LURA.SendSequence then LURA:SendSequence() end
+    end)
+    sendBtn:SetScript("OnEnter", function() sendBg:SetColorTexture(0.3, 0.3, 0.3, 1) end)
+    sendBtn:SetScript("OnLeave", function() sendBg:SetColorTexture(0.1, 0.1, 0.1, 1) end)
+    LURA.sendToChatBtn = sendBtn
 end
 
 -- Summary Panel & Sequence Logic
@@ -90,41 +137,20 @@ function LURA:CreateSummaryPanel()
     tex:SetColorTexture(0, 0, 0, 0.7)
     
     LURA.summaryTopSlotTextures = {}
-    LURA.summaryBottomSlotTextures = {}
+    LURA.summaryBottomSlotBgs = {}
     
     for i = 1, 5 do
         local topIcon = f:CreateTexture(nil, "ARTWORK")
         topIcon:SetSize(30, 30)
-        topIcon:SetPoint("TOPLEFT", f, "TOPLEFT", 10 + (i-1)*35, -10)
         local dbMarkerIndex = LURA.db.markers[i] or i
         topIcon:SetTexture(LURA.MARKER_TEXTURES[dbMarkerIndex])
         LURA.summaryTopSlotTextures[i] = topIcon
+        
+        local btmBg = f:CreateTexture(nil, "BACKGROUND")
+        btmBg:SetSize(30, 30)
+        btmBg:SetColorTexture(0.1, 0.1, 0.1, 1)
+        LURA.summaryBottomSlotBgs[i] = btmBg
     end
-    
-    LURA.summaryBottomSlotTextures = {}
-    
-    for i = 1, 5 do
-        local btmIcon = f:CreateTexture(nil, "ARTWORK")
-        btmIcon:SetSize(30, 30)
-        btmIcon:SetPoint("TOPLEFT", f, "TOPLEFT", 10 + (i-1)*35, -45)
-        btmIcon:SetColorTexture(0.2, 0.2, 0.2, 1)
-        LURA.summaryBottomSlotTextures[i] = btmIcon
-    end
-    
-    local resetBtn = CreateFrame("Button", nil, f)
-    resetBtn:SetSize(30, 30)
-    resetBtn:SetPoint("TOPLEFT", f, "TOPLEFT", 10 + 5*35, -45)
-    LURA.summaryResetBtn = resetBtn
-    
-    local resetIcon = resetBtn:CreateTexture(nil, "ARTWORK")
-    resetIcon:SetAllPoints()
-    resetIcon:SetTexture(LURA.RESET_TEXTURE)
-    
-    resetBtn:SetScript("OnClick", function()
-        if LURA.ResetSequence then
-            LURA:ResetSequence()
-        end
-    end)
 end
 
 function LURA:UpdateSummaryPanel()
@@ -138,28 +164,42 @@ function LURA:UpdateSummaryPanel()
     end
     
     for i = 1, 5 do
+        -- Update Summary Panel Marker Visibility
         if LURA.db.markers[i] == 9 then
             LURA.summaryTopSlotTextures[i]:Hide()
-            LURA.summaryBottomSlotTextures[i]:Hide()
+            if LURA.summaryBottomSlotBgs and LURA.summaryBottomSlotBgs[i] then LURA.summaryBottomSlotBgs[i]:Hide() end
         else
             LURA.summaryTopSlotTextures[i]:Show()
-            LURA.summaryBottomSlotTextures[i]:Show()
-            
-            local sequenceIndex = nil
-            for idx, activeIndex in ipairs(activeIndices) do
-                if activeIndex == i then
-                    sequenceIndex = idx
-                    break
-                end
-            end
-            
-            if sequenceIndex and LURA.currentSequence[sequenceIndex] then
-                local symIdx = LURA.currentSequence[sequenceIndex]
-                LURA.summaryBottomSlotTextures[i]:SetTexture(LURA.SYMBOL_TEXTURES[symIdx])
-                LURA.summaryBottomSlotTextures[i]:SetVertexColor(1, 1, 1, 1)
+            if LURA.summaryBottomSlotBgs and LURA.summaryBottomSlotBgs[i] then LURA.summaryBottomSlotBgs[i]:Show() end
+        end
+        
+        -- Update Interactive Panel Visibility & Sequence
+        if LURA.interactiveBottomSlotBgs then
+            if LURA.db.markers[i] == 9 then
+                LURA.interactiveBtns[i]:Hide()
+                LURA.interactiveBottomSlotBgs[i]:Hide()
+                LURA.interactiveBottomSlotTexts[i]:Hide()
             else
-                LURA.summaryBottomSlotTextures[i]:SetTexture(nil)
-                LURA.summaryBottomSlotTextures[i]:SetColorTexture(0.2, 0.2, 0.2, 1)
+                LURA.interactiveBtns[i]:Show()
+                LURA.interactiveBottomSlotBgs[i]:Show()
+                LURA.interactiveBottomSlotTexts[i]:Show()
+                
+                local sequenceIndex = nil
+                for idx, activeIndex in ipairs(activeIndices) do
+                    if activeIndex == i then
+                        sequenceIndex = idx
+                        break
+                    end
+                end
+                
+                if sequenceIndex and LURA.currentSequence[sequenceIndex] then
+                    local symIdx = LURA.currentSequence[sequenceIndex]
+                    LURA.interactiveBottomSlotTexts[i]:SetText(LURA.SYMBOL_TEXTS[symIdx])
+                    LURA.interactiveBottomSlotTexts[i]:SetTextColor(0.4, 0.6, 1)
+                else
+                    LURA.interactiveBottomSlotTexts[i]:SetText(".")
+                    LURA.interactiveBottomSlotTexts[i]:SetTextColor(1, 1, 1)
+                end
             end
         end
     end
@@ -213,26 +253,44 @@ function LURA:ApplyBoxSpacing()
     local spacing = LURA.db.boxSpacing or 35
     local padding = LURA.db.boxPadding or 10
     
-    local width = padding + 5 * spacing + 30 + padding
+    -- Both panels span exactly 5 slots
+    local panelWidth = padding + 4 * spacing + 30 + padding
+    
+    local summaryHeight = padding + 30 + 5 + 30 + padding -- 2 rows of 30, with 5 spacing between
+    local interactiveHeight = padding + 30 + 5 + 30 + 5 + 30 + padding -- 3 rows of 30, with 5 spacing between
     
     if LUraInteractiveFrame and LURA.interactiveBtns then
-        LUraInteractiveFrame:SetWidth(width)
+        LUraInteractiveFrame:SetSize(panelWidth, interactiveHeight)
         for i = 1, 5 do
-            LURA.interactiveBtns[i]:SetPoint("LEFT", LUraInteractiveFrame, "LEFT", padding + (i-1)*spacing, 0)
+            -- The sequence slots (non-clickable) go on top now (-padding)
+            if LURA.interactiveBottomSlotBgs[i] then
+                LURA.interactiveBottomSlotBgs[i]:SetPoint("TOPLEFT", LUraInteractiveFrame, "TOPLEFT", padding + (i-1)*spacing, -padding)
+            end
+            -- The clickable buttons go in the second row (-(padding + 35))
+            LURA.interactiveBtns[i]:SetPoint("TOPLEFT", LUraInteractiveFrame, "TOPLEFT", padding + (i-1)*spacing, -(padding + 35))
+        end
+        
+        local spanWidth = 4 * spacing + 30
+        local gap = 5
+        local halfWidth = (spanWidth - gap) / 2
+        
+        if LURA.sendToChatBtn then
+            LURA.sendToChatBtn:SetSize(halfWidth, 30)
+            LURA.sendToChatBtn:SetPoint("TOPLEFT", LUraInteractiveFrame, "TOPLEFT", padding, -(padding + 70))
         end
         if LURA.interactiveResetBtn then
-            LURA.interactiveResetBtn:SetPoint("LEFT", LUraInteractiveFrame, "LEFT", padding + 5*spacing, 0)
+            LURA.interactiveResetBtn:SetSize(halfWidth, 30)
+            LURA.interactiveResetBtn:SetPoint("TOPLEFT", LUraInteractiveFrame, "TOPLEFT", padding + halfWidth + gap, -(padding + 70))
         end
     end
     
     if LUraSummaryFrame and LURA.summaryTopSlotTextures then
-        LUraSummaryFrame:SetWidth(width)
+        LUraSummaryFrame:SetSize(panelWidth, summaryHeight)
         for i = 1, 5 do
-            LURA.summaryTopSlotTextures[i]:SetPoint("TOPLEFT", LUraSummaryFrame, "TOPLEFT", padding + (i-1)*spacing, -10)
-            LURA.summaryBottomSlotTextures[i]:SetPoint("TOPLEFT", LUraSummaryFrame, "TOPLEFT", padding + (i-1)*spacing, -45)
-        end
-        if LURA.summaryResetBtn then
-            LURA.summaryResetBtn:SetPoint("TOPLEFT", LUraSummaryFrame, "TOPLEFT", padding + 5*spacing, -45)
+            LURA.summaryTopSlotTextures[i]:SetPoint("TOPLEFT", LUraSummaryFrame, "TOPLEFT", padding + (i-1)*spacing, -padding)
+            if LURA.summaryBottomSlotBgs and LURA.summaryBottomSlotBgs[i] then
+                LURA.summaryBottomSlotBgs[i]:SetPoint("TOPLEFT", LUraSummaryFrame, "TOPLEFT", padding + (i-1)*spacing, -(padding + 35))
+            end
         end
     end
 end
@@ -343,13 +401,13 @@ function LURA:CreateSpacingPanel()
     chatYSlider.Low:SetText("-100")
     chatYSlider.High:SetText("100")
     _G[chatYSlider:GetName() .. "Text"]:SetText("Chat Y Offset")
-    chatYSlider:SetValue(LURA.db.chatOffsetY or -40)
+    chatYSlider:SetValue(LURA.db.chatOffsetY or -35)
 
     local chatEditY = CreateFrame("EditBox", nil, f, "InputBoxTemplate")
     chatEditY:SetSize(40, 20)
     chatEditY:SetPoint("LEFT", chatYSlider, "RIGHT", 15, 0)
     chatEditY:SetAutoFocus(false)
-    chatEditY:SetText(tostring(LURA.db.chatOffsetY or -40))
+    chatEditY:SetText(tostring(LURA.db.chatOffsetY or -35))
     chatEditY:SetScript("OnEnterPressed", function(self)
         local val = tonumber(self:GetText())
         if val then chatYSlider:SetValue(val) end
@@ -426,21 +484,14 @@ function LURA:SendSequence()
         return
     end
     
-    local symbolTextMap = {
-        [1] = "O",
-        [2] = "X",
-        [3] = "V",
-        [4] = "T",
-        [5] = "^",
-    }
-    
     local msg = ""
     for i, symIdx in ipairs(LURA.currentSequence) do
-        local symStr = symbolTextMap[symIdx] or "?"
+        local symStr = LURA.SYMBOL_TEXTS[symIdx] or "?"
         msg = msg .. symStr .. (i < #LURA.currentSequence and " " or "")
     end
     
-    local fullMsg = "/rw L'Ura Order: " .. msg
+    local channel = tonumber(LURA.db.chatChannel) or 4
+    local fullMsg = "/" .. channel .. " " .. msg
     
     LURA:ShowCopyWindow(fullMsg)
 end
