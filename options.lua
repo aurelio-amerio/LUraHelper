@@ -126,6 +126,8 @@ function LURA:CreateOptionsPanel()
             LUraInteractiveFrame:SetPoint("CENTER", 496, -22)
             LUraInteractiveFrame:SetUserPlaced(false)
         end
+        LURA.db.summaryPos = { point = "CENTER", x = 496, y = 49 }
+        LURA.db.interactivePos = { point = "CENTER", x = 496, y = -22 }
     end)
 
     local defaultsBtn = CreateFrame("Button", "LUraRestoreDefaultsBtn", panel, "UIPanelButtonTemplate")
@@ -148,6 +150,8 @@ function LURA:CreateOptionsPanel()
             LUraInteractiveFrame:SetPoint("CENTER", 496, -22)
             LUraInteractiveFrame:SetUserPlaced(false)
         end
+        LURA.db.summaryPos = { point = "CENTER", x = 496, y = 49 }
+        LURA.db.interactivePos = { point = "CENTER", x = 496, y = -22 }
         
         LURA:RefreshAllUI()
     end)

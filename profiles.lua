@@ -30,15 +30,43 @@ function LURA:DeepCopyProfile(src)
     return copy
 end
 
+function LURA:SaveCurrentPositions()
+    if LUraSummaryFrame and LURA.db then
+        local p, _, _, x, y = LUraSummaryFrame:GetPoint()
+        LURA.db.summaryPos = { point = p or "CENTER", x = x or 496, y = y or 49 }
+    end
+    if LUraInteractiveFrame and LURA.db then
+        local p, _, _, x, y = LUraInteractiveFrame:GetPoint()
+        LURA.db.interactivePos = { point = p or "CENTER", x = x or 496, y = y or -22 }
+    end
+end
+
+function LURA:ApplyProfilePositions()
+    if not LURA.db then return end
+    if LUraSummaryFrame and LURA.db.summaryPos then
+        LUraSummaryFrame:ClearAllPoints()
+        LUraSummaryFrame:SetPoint(LURA.db.summaryPos.point, UIParent, LURA.db.summaryPos.point, LURA.db.summaryPos.x, LURA.db.summaryPos.y)
+    end
+    if LUraInteractiveFrame and LURA.db.interactivePos then
+        LUraInteractiveFrame:ClearAllPoints()
+        LUraInteractiveFrame:SetPoint(LURA.db.interactivePos.point, UIParent, LURA.db.interactivePos.point, LURA.db.interactivePos.x, LURA.db.interactivePos.y)
+    end
+end
+
 function LURA:SwitchProfile(name)
     if not LUraMemoryGameDB.profiles[name] then return end
+    -- Save current frame positions before switching
+    LURA:SaveCurrentPositions()
     LUraMemoryGameDB.activeProfile = name
     LURA.db = LUraMemoryGameDB.profiles[name]
+    LURA:ApplyProfilePositions()
     LURA:RefreshAllUI()
 end
 
 function LURA:CreateNewProfile(name)
     if not name or name == "" then return false end
+    -- Capture current positions before copying
+    LURA:SaveCurrentPositions()
     LUraMemoryGameDB.profiles[name] = LURA:DeepCopyProfile(LURA.db)
     LURA:SwitchProfile(name)
     return true

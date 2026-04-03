@@ -47,6 +47,8 @@ frame:SetScript("OnEvent", function(self, event, arg1)
                 markers = LUraMemoryGameDB.markers or {1, 2, 3, 4, 5},
                 locked = LUraMemoryGameDB.locked or false,
                 hidden = LUraMemoryGameDB.hidden or false,
+                summaryPos = { point = "CENTER", x = 496, y = 49 },
+                interactivePos = { point = "CENTER", x = 496, y = -22 },
             }
             LUraMemoryGameDB = {
                 activeProfile = "Default",
@@ -66,11 +68,15 @@ frame:SetScript("OnEvent", function(self, event, arg1)
                 markers = {1, 2, 3, 4, 5},
                 locked = false,
                 hidden = false,
+                summaryPos = { point = "CENTER", x = 496, y = 49 },
+                interactivePos = { point = "CENTER", x = 496, y = -22 },
             }
         end
         local profile = LUraMemoryGameDB.profiles[LUraMemoryGameDB.activeProfile]
         if profile.locked == nil then profile.locked = false end
         if profile.hidden == nil then profile.hidden = false end
+        if not profile.summaryPos then profile.summaryPos = { point = "CENTER", x = 496, y = 49 } end
+        if not profile.interactivePos then profile.interactivePos = { point = "CENTER", x = 496, y = -22 } end
         LURA.db = profile
         
         -- Create UI
