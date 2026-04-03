@@ -93,6 +93,29 @@ function LURA:CreateOptionsPanel()
     end)
     LURA.hideBtn = hideBtn
 
+    local chatChannelLabel = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    chatChannelLabel:SetPoint("TOPLEFT", hideBtn, "BOTTOMLEFT", 0, -12)
+    chatChannelLabel:SetText("Listen Channel Number:")
+
+    local chatChannelEditBox = CreateFrame("EditBox", "LUraChatChannelEditBox", panel, "InputBoxTemplate")
+    chatChannelEditBox:SetSize(40, 20)
+    chatChannelEditBox:SetPoint("LEFT", chatChannelLabel, "RIGHT", 10, 0)
+    chatChannelEditBox:SetAutoFocus(false)
+    chatChannelEditBox:SetNumeric(true)
+    chatChannelEditBox:SetMaxLetters(2)
+    chatChannelEditBox:SetScript("OnTextChanged", function(self, isUserInput)
+        if isUserInput then
+            local val = tonumber(self:GetText())
+            if val then
+                LURA.db.chatChannel = val
+                if LURA.chatFrame and LURA.chatFrame.UpdateTitle then
+                    LURA.chatFrame:UpdateTitle()
+                end
+            end
+        end
+    end)
+    LURA.chatChannelEditBox = chatChannelEditBox
+
     -- TODO: Re-enable Test Mode once zone-based visibility is working
     -- local testCheck = CreateFrame("CheckButton", "LUraTestCheck", panel, "UICheckButtonTemplate")
     -- testCheck:SetPoint("TOPLEFT", hideBtn, "BOTTOMLEFT", 0, -8)
@@ -104,7 +127,7 @@ function LURA:CreateOptionsPanel()
     -- LURA.testCheck = testCheck
 
     local profileTitle = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-    profileTitle:SetPoint("TOPLEFT", hideBtn, "BOTTOMLEFT", 0, -20)
+    profileTitle:SetPoint("TOPLEFT", chatChannelLabel, "BOTTOMLEFT", 0, -20)
     profileTitle:SetText("Profile & Tools")
 
     -- Profile dropdown
@@ -178,6 +201,7 @@ function LURA:CreateOptionsPanel()
         LURA.db.markers = {1, 2, 3, 4, 5}
         LURA.db.locked = false
         LURA.db.hidden = false
+        LURA.db.chatChannel = 4
         LURA.db.summaryScale = 1.0
         LURA.db.interactiveScale = 1.0
         LURA.testMode = false
@@ -301,6 +325,8 @@ function LURA:CreateOptionsPanel()
             LURA.db.locked = false
             LURA:ApplyLockState()
             LURA:UpdateOptionsPanel()
+        elseif cmd == "send" then
+            if LURA.SendSequence then LURA:SendSequence() end
         -- TODO: Re-enable once zone-based visibility is working
         -- elseif cmd == "test" then
         --     LURA.testMode = not LURA.testMode
@@ -316,6 +342,9 @@ end
 function LURA:UpdateOptionsPanel()
     if LURA.lockBtn then LURA.lockBtn:SetChecked(LURA.db.locked) end
     if LURA.hideBtn then LURA.hideBtn:SetChecked(LURA.db.hidden) end
+    if LURA.chatChannelEditBox then
+        LURA.chatChannelEditBox:SetText(tostring(LURA.db.chatChannel or 4))
+    end
     -- if LURA.testCheck then LURA.testCheck:SetChecked(LURA.testMode) end
     if LURA.profileDropdown then
         UIDropDownMenu_SetText(LURA.profileDropdown, LUraHelperDB.activeProfile)

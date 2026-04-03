@@ -31,10 +31,30 @@ LURA.MARKER_NAMES = {
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("ADDON_LOADED")
 frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+-- Listen on multiple channels as fallback (Midnight combat restrictions)
+frame:RegisterEvent("CHAT_MSG_RAID_WARNING")
+frame:RegisterEvent("CHAT_MSG_RAID")
+frame:RegisterEvent("CHAT_MSG_RAID_LEADER")
+frame:RegisterEvent("CHAT_MSG_INSTANCE_CHAT")
+frame:RegisterEvent("CHAT_MSG_INSTANCE_CHAT_LEADER")
+frame:RegisterEvent("CHAT_MSG_SAY")
+frame:RegisterEvent("CHAT_MSG_YELL")
 -- TODO: Re-enable zone-based visibility once encounter detection is working
 -- frame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 -- frame:RegisterEvent("ENCOUNTER_START")
 -- frame:RegisterEvent("ENCOUNTER_END")
+
+-- Chat events that carry "L'Ura Order:" messages
+local CHAT_EVENTS = {
+    CHAT_MSG_RAID_WARNING = true,
+    CHAT_MSG_RAID = true,
+    CHAT_MSG_RAID_LEADER = true,
+    CHAT_MSG_INSTANCE_CHAT = true,
+    CHAT_MSG_INSTANCE_CHAT_LEADER = true,
+    CHAT_MSG_SAY = true,
+    CHAT_MSG_YELL = true,
+}
+
 frame:SetScript("OnEvent", function(self, event, arg1)
     if event == "ADDON_LOADED" and arg1 == addonName then
         LURA.testMode = false
@@ -69,6 +89,7 @@ frame:SetScript("OnEvent", function(self, event, arg1)
                 markers = {1, 2, 3, 4, 5},
                 locked = false,
                 hidden = false,
+                chatChannel = 4,
                 summaryPos = { point = "CENTER", x = 496, y = 49 },
                 interactivePos = { point = "CENTER", x = 496, y = -22 },
             }
@@ -76,6 +97,7 @@ frame:SetScript("OnEvent", function(self, event, arg1)
         local profile = LUraHelperDB.profiles[LUraHelperDB.activeProfile]
         if profile.locked == nil then profile.locked = false end
         if profile.hidden == nil then profile.hidden = false end
+        if profile.chatChannel == nil then profile.chatChannel = 4 end
         if not profile.summaryPos then profile.summaryPos = { point = "CENTER", x = 496, y = 49 } end
         if not profile.interactivePos then profile.interactivePos = { point = "CENTER", x = 496, y = -22 } end
         if not profile.summaryScale then profile.summaryScale = 1.0 end
@@ -86,6 +108,8 @@ frame:SetScript("OnEvent", function(self, event, arg1)
         LURA:CreateOptionsPanel()
         LURA:CreateInteractivePanel()
         LURA:CreateSummaryPanel()
+        LURA:CreateDebugPanel()
+        LURA:CreateChatPanel()
         
         LURA:ApplyVisibility()
         LURA:ApplyLockState()
@@ -93,6 +117,13 @@ frame:SetScript("OnEvent", function(self, event, arg1)
     elseif event == "PLAYER_ENTERING_WORLD" then
         if LURA.db then
             LURA:ApplyVisibility()
+        end
+    elseif CHAT_EVENTS[event] then
+        if type(arg1) == "string" and arg1:match("^L'Ura Order:") then
+            print("|cff00ff00LUra:|r Received order via " .. event)
+            if LURA.ProcessChatCommand then
+                LURA:ProcessChatCommand(arg1)
+            end
         end
     -- TODO: Re-enable zone-based visibility once encounter detection is working
     -- elseif event == "ZONE_CHANGED_NEW_AREA" then
@@ -133,9 +164,13 @@ function LURA:ApplyVisibility()
         LURA:UpdateSummaryPanel()
         LUraInteractiveFrame:Show()
         LUraSummaryFrame:Show()
+        if LUraDebugFrame then LUraDebugFrame:Show() end
+        if LUraChatFrame then LUraChatFrame:Show() end
     else
         LUraInteractiveFrame:Hide()
         LUraSummaryFrame:Hide()
+        if LUraDebugFrame then LUraDebugFrame:Hide() end
+        if LUraChatFrame then LUraChatFrame:Hide() end
     end
 end
 
@@ -148,11 +183,27 @@ function LURA:ApplyLockState()
         LUraInteractiveFrame:SetScript("OnDragStop", nil)
         LUraSummaryFrame:SetScript("OnDragStart", nil)
         LUraSummaryFrame:SetScript("OnDragStop", nil)
+        if LUraDebugFrame then
+            LUraDebugFrame:SetScript("OnDragStart", nil)
+            LUraDebugFrame:SetScript("OnDragStop", nil)
+        end
+        if LUraChatFrame then
+            LUraChatFrame:SetScript("OnDragStart", nil)
+            LUraChatFrame:SetScript("OnDragStop", nil)
+        end
     else
         LUraInteractiveFrame:SetScript("OnDragStart", LUraInteractiveFrame.StartMoving)
         LUraInteractiveFrame:SetScript("OnDragStop", LUraInteractiveFrame.StopMovingOrSizing)
         LUraSummaryFrame:SetScript("OnDragStart", LUraSummaryFrame.StartMoving)
         LUraSummaryFrame:SetScript("OnDragStop", LUraSummaryFrame.StopMovingOrSizing)
+        if LUraDebugFrame then
+            LUraDebugFrame:SetScript("OnDragStart", LUraDebugFrame.StartMoving)
+            LUraDebugFrame:SetScript("OnDragStop", LUraDebugFrame.StopMovingOrSizing)
+        end
+        if LUraChatFrame then
+            LUraChatFrame:SetScript("OnDragStart", LUraChatFrame.StartMoving)
+            LUraChatFrame:SetScript("OnDragStop", LUraChatFrame.StopMovingOrSizing)
+        end
     end
 end
 -- Helper: apply scale to a frame while keeping its visual center position

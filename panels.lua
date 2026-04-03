@@ -178,3 +178,120 @@ function LURA:UpdateSummaryPanelMarkers()
     end
     LURA:UpdateSummaryPanel()
 end
+
+function LURA:ProcessChatCommand(msg)
+    local prefix = "L'Ura Order:"
+    local startIndex = msg:find(prefix, 1, true)
+    if startIndex then
+        local symbolsStr = msg:sub(startIndex + #prefix)
+        
+        local textSymbolMap = {
+            ["O"] = 1,
+            ["X"] = 2,
+            ["V"] = 3,
+            ["T"] = 4,
+            ["^"] = 5,
+        }
+        
+        local newSequence = {}
+        for char in symbolsStr:gmatch(".") do
+            local symIdx = textSymbolMap[char]
+            if symIdx then
+                table.insert(newSequence, symIdx)
+            end
+        end
+        
+        if #newSequence > 0 then
+            LURA.currentSequence = newSequence
+            LURA:UpdateSummaryPanel()
+        end
+    end
+end
+
+function LURA:CreateDebugPanel()
+    local f = CreateFrame("Frame", "LUraDebugFrame", UIParent)
+    f:SetSize(130, 40)
+    f:SetPoint("CENTER", 496, -70)
+    f:SetMovable(true)
+    f:EnableMouse(true)
+    f:RegisterForDrag("LeftButton")
+    f:SetScript("OnDragStart", f.StartMoving)
+    f:SetScript("OnDragStop", f.StopMovingOrSizing)
+    
+    local tex = f:CreateTexture(nil, "BACKGROUND")
+    tex:SetAllPoints()
+    tex:SetColorTexture(0, 0, 0, 0.7)
+    
+    local btn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    btn:SetSize(110, 22)
+    btn:SetPoint("CENTER", f, "CENTER", 0, 0)
+    btn:SetText("Copy Warning")
+    
+    btn:SetScript("OnClick", function()
+        if LURA.SendSequence then LURA:SendSequence() end
+    end)
+    
+    LURA.debugFrame = f
+end
+
+function LURA:SendSequence()
+    if not LURA.currentSequence or #LURA.currentSequence == 0 then
+        print("LUra: Sequence is empty.")
+        return
+    end
+    
+    local symbolTextMap = {
+        [1] = "O",
+        [2] = "X",
+        [3] = "V",
+        [4] = "T",
+        [5] = "^",
+    }
+    
+    local msg = ""
+    for i, symIdx in ipairs(LURA.currentSequence) do
+        local symStr = symbolTextMap[symIdx] or "?"
+        msg = msg .. symStr .. (i < #LURA.currentSequence and " " or "")
+    end
+    
+    local fullMsg = "/rw L'Ura Order: " .. msg
+    
+    LURA:ShowCopyWindow(fullMsg)
+end
+
+function LURA:ShowCopyWindow(text)
+    if not LUraCopyFrame then
+        local f = CreateFrame("Frame", "LUraCopyFrame", UIParent, "BasicFrameTemplateWithInset")
+        f:SetSize(300, 100)
+        f:SetPoint("CENTER", 0, 100)
+        f:SetFrameStrata("DIALOG")
+        
+        f.title = f:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        f.title:SetPoint("TOP", f, "TOP", 0, -5)
+        f.title:SetText("Copy Raid Warning (Press Ctrl+C)")
+        
+        local scrollFrame = CreateFrame("ScrollFrame", "LUraCopyScrollFrame", f)
+        scrollFrame:SetPoint("TOPLEFT", f, "TOPLEFT", 12, -35)
+        scrollFrame:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -12, 45)
+        
+        local editBox = CreateFrame("EditBox", "LUraCopyEditBox", scrollFrame)
+        editBox:SetSize(276, 30)
+        editBox:SetMultiLine(true)
+        editBox:SetFontObject("ChatFontNormal")
+        editBox:SetMaxLetters(999)
+        editBox:SetAutoFocus(true)
+        editBox:SetScript("OnEscapePressed", function(self) self:ClearFocus() f:Hide() end)
+        scrollFrame:SetScrollChild(editBox)
+        f.editBox = editBox
+        
+        local actionBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+        actionBtn:SetSize(80, 22)
+        actionBtn:SetPoint("BOTTOM", f, "BOTTOM", 0, 12)
+        actionBtn:SetText("Close")
+        actionBtn:SetScript("OnClick", function() f:Hide() end)
+    end
+    
+    LUraCopyFrame.editBox:SetText(text)
+    LUraCopyFrame.editBox:HighlightText()
+    LUraCopyFrame:Show()
+end
