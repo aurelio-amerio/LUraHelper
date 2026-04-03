@@ -10,7 +10,7 @@ function LURA:CreateChatPanel()
     local MessageDisplay = f:CreateFontString(nil, "OVERLAY")
     f.MessageDisplay = MessageDisplay
     
-    local size = LURA.db.chatFontSize or 29
+    local size = LURA.db.chatFontSize or 29.5
     MessageDisplay:SetFont("Interface\\AddOns\\LUraHelper\\font\\dejavu-sans-mono-bold.TTF", size, "MONOCHROME, OUTLINE")
     -- Left edge since the drag handle is gone
     MessageDisplay:SetPoint("LEFT", f, "LEFT", 0, 0)
@@ -43,7 +43,7 @@ end
 
 function LURA:ApplyChatOffset()
     if LUraChatFrame and LUraSummaryFrame then
-        local x = LURA.db.chatOffsetX or -212
+        local x = LURA.db.chatOffsetX or -210
         local y = LURA.db.chatOffsetY or -40
         LUraChatFrame:ClearAllPoints()
         LUraChatFrame:SetPoint("TOPLEFT", LUraSummaryFrame, "TOPRIGHT", x, y)
@@ -52,6 +52,6 @@ end
 
 function LURA:ApplyChatFont()
     if not LURA.chatFrame or not LURA.chatFrame.MessageDisplay then return end
-    local size = LURA.db.chatFontSize or 29
+    local size = LURA.db.chatFontSize or 29.5
     LURA.chatFrame.MessageDisplay:SetFont("Interface\\AddOns\\LUraHelper\\font\\dejavu-sans-mono-bold.TTF", size, "MONOCHROME, OUTLINE")
 end

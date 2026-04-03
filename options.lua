@@ -206,14 +206,14 @@ function LURA:CreateOptionsPanel()
         LURA.db.interactiveScale = 1.0
         LURA.db.boxSpacing = 36
         LURA.db.boxPadding = 6
-        LURA.db.chatOffsetX = -212
+        LURA.db.chatOffsetX = -210
         LURA.db.chatOffsetY = -40
-        LURA.db.chatFontSize = 29
+        LURA.db.chatFontSize = 29.5
         LURA.testMode = false
         
         if LUraSpaceSlider then LUraSpaceSlider:SetValue(36) end
         if LUraPadSlider then LUraPadSlider:SetValue(6) end
-        if LUraChatSlider then LUraChatSlider:SetValue(-212) end
+        if LUraChatSlider then LUraChatSlider:SetValue(-210) end
         if LUraChatYSlider then LUraChatYSlider:SetValue(-40) end
         if LUraFontSlider then LUraFontSlider:SetValue(29) end
         if LURA.ApplyBoxSpacing then LURA:ApplyBoxSpacing() end

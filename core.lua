@@ -103,10 +103,10 @@ frame:SetScript("OnEvent", function(self, event, arg1)
         if profile.locked == nil then profile.locked = false end
         if profile.hidden == nil then profile.hidden = false end
         if profile.chatChannel == nil then profile.chatChannel = 4 end
-        if profile.chatFontSize == nil then profile.chatFontSize = 29 end
+        if profile.chatFontSize == nil then profile.chatFontSize = 29.5 end
         if profile.boxSpacing == nil then profile.boxSpacing = 36 end
         if profile.boxPadding == nil then profile.boxPadding = 6 end
-        if profile.chatOffsetX == nil then profile.chatOffsetX = -212 end
+        if profile.chatOffsetX == nil then profile.chatOffsetX = -210 end
         if profile.chatOffsetY == nil then profile.chatOffsetY = -40 end
         if not profile.summaryPos then profile.summaryPos = { point = "CENTER", x = 496, y = 49 } end
         if not profile.interactivePos then profile.interactivePos = { point = "CENTER", x = 496, y = -22 } end
