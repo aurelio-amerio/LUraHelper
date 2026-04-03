@@ -15,6 +15,26 @@ function LURA:CreateInteractivePanel()
     tex:SetAllPoints()
     tex:SetColorTexture(0, 0, 0, 0.7)
     
+    local copyBg = f:CreateTexture(nil, "BACKGROUND")
+    copyBg:SetColorTexture(0.05, 0.05, 0.05, 1)
+    LURA.interactiveCopyBg = copyBg
+
+    local copyBox = CreateFrame("EditBox", nil, f)
+    copyBox:SetFont("Interface\\AddOns\\LUraHelper\\font\\dejavu-sans-mono-bold.TTF", 16, "OUTLINE")
+    copyBox:SetAutoFocus(false)
+    copyBox:SetTextInsets(5, 5, 0, 0)
+    copyBox:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+    copyBox:SetScript("OnEnterPressed", function(self) self:ClearFocus() end)
+    copyBox:SetScript("OnTextChanged", function(self, isUserInput)
+        if isUserInput then
+            self:SetText(self.targetText or "")
+            self:HighlightText()
+        end
+    end)
+    copyBox:SetScript("OnEditFocusGained", function(self) self:HighlightText() end)
+    copyBox.targetText = ""
+    LURA.interactiveCopyBox = copyBox
+
     LURA.interactiveBtns = {}
     LURA.interactiveBottomSlotBgs = {}
     LURA.interactiveBottomSlotTexts = {}
@@ -119,6 +139,11 @@ end
 
 function LURA:ResetSequence()
     LURA.currentSequence = {}
+    if LURA.interactiveCopyBox then
+        LURA.interactiveCopyBox.targetText = ""
+        LURA.interactiveCopyBox:SetText("")
+        LURA.interactiveCopyBox:ClearFocus()
+    end
     LURA:UpdateSummaryPanel()
 end
 
@@ -257,17 +282,27 @@ function LURA:ApplyBoxSpacing()
     local panelWidth = padding + 4 * spacing + 30 + padding
     
     local summaryHeight = padding + 30 + 5 + 30 + padding -- 2 rows of 30, with 5 spacing between
-    local interactiveHeight = padding + 30 + 5 + 30 + 5 + 30 + padding -- 3 rows of 30, with 5 spacing between
+    local interactiveHeight = padding + 30 + 5 + 30 + 5 + 30 + 5 + 30 + padding -- 4 rows of 30, with 5 spacing between
     
     if LUraInteractiveFrame and LURA.interactiveBtns then
         LUraInteractiveFrame:SetSize(panelWidth, interactiveHeight)
+        
+        if LURA.interactiveCopyBg then
+            LURA.interactiveCopyBg:SetPoint("TOPLEFT", LUraInteractiveFrame, "TOPLEFT", padding, -padding)
+            LURA.interactiveCopyBg:SetSize(panelWidth - 2 * padding, 30)
+        end
+        if LURA.interactiveCopyBox then
+            LURA.interactiveCopyBox:SetPoint("TOPLEFT", LUraInteractiveFrame, "TOPLEFT", padding, -padding)
+            LURA.interactiveCopyBox:SetSize(panelWidth - 2 * padding, 30)
+        end
+
         for i = 1, 5 do
-            -- The sequence slots (non-clickable) go on top now (-padding)
+            -- The sequence slots (non-clickable) go on the second row (-(padding + 35))
             if LURA.interactiveBottomSlotBgs[i] then
-                LURA.interactiveBottomSlotBgs[i]:SetPoint("TOPLEFT", LUraInteractiveFrame, "TOPLEFT", padding + (i-1)*spacing, -padding)
+                LURA.interactiveBottomSlotBgs[i]:SetPoint("TOPLEFT", LUraInteractiveFrame, "TOPLEFT", padding + (i-1)*spacing, -(padding + 35))
             end
-            -- The clickable buttons go in the second row (-(padding + 35))
-            LURA.interactiveBtns[i]:SetPoint("TOPLEFT", LUraInteractiveFrame, "TOPLEFT", padding + (i-1)*spacing, -(padding + 35))
+            -- The clickable buttons go on the third row (-(padding + 70))
+            LURA.interactiveBtns[i]:SetPoint("TOPLEFT", LUraInteractiveFrame, "TOPLEFT", padding + (i-1)*spacing, -(padding + 70))
         end
         
         local spanWidth = 4 * spacing + 30
@@ -276,11 +311,11 @@ function LURA:ApplyBoxSpacing()
         
         if LURA.sendToChatBtn then
             LURA.sendToChatBtn:SetSize(halfWidth, 30)
-            LURA.sendToChatBtn:SetPoint("TOPLEFT", LUraInteractiveFrame, "TOPLEFT", padding, -(padding + 70))
+            LURA.sendToChatBtn:SetPoint("TOPLEFT", LUraInteractiveFrame, "TOPLEFT", padding, -(padding + 105))
         end
         if LURA.interactiveResetBtn then
             LURA.interactiveResetBtn:SetSize(halfWidth, 30)
-            LURA.interactiveResetBtn:SetPoint("TOPLEFT", LUraInteractiveFrame, "TOPLEFT", padding + halfWidth + gap, -(padding + 70))
+            LURA.interactiveResetBtn:SetPoint("TOPLEFT", LUraInteractiveFrame, "TOPLEFT", padding + halfWidth + gap, -(padding + 105))
         end
     end
     
@@ -493,42 +528,11 @@ function LURA:SendSequence()
     local channel = tonumber(LURA.db.chatChannel) or 4
     local fullMsg = "/" .. channel .. " " .. msg
     
-    LURA:ShowCopyWindow(fullMsg)
-end
-
-function LURA:ShowCopyWindow(text)
-    if not LUraCopyFrame then
-        local f = CreateFrame("Frame", "LUraCopyFrame", UIParent, "BasicFrameTemplateWithInset")
-        f:SetSize(300, 100)
-        f:SetPoint("CENTER", 0, 100)
-        f:SetFrameStrata("DIALOG")
-        
-        f.title = f:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-        f.title:SetPoint("TOP", f, "TOP", 0, -5)
-        f.title:SetText("Copy Raid Warning (Press Ctrl+C)")
-        
-        local scrollFrame = CreateFrame("ScrollFrame", "LUraCopyScrollFrame", f)
-        scrollFrame:SetPoint("TOPLEFT", f, "TOPLEFT", 12, -35)
-        scrollFrame:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -12, 45)
-        
-        local editBox = CreateFrame("EditBox", "LUraCopyEditBox", scrollFrame)
-        editBox:SetSize(276, 30)
-        editBox:SetMultiLine(true)
-        editBox:SetFontObject("ChatFontNormal")
-        editBox:SetMaxLetters(999)
-        editBox:SetAutoFocus(true)
-        editBox:SetScript("OnEscapePressed", function(self) self:ClearFocus() f:Hide() end)
-        scrollFrame:SetScrollChild(editBox)
-        f.editBox = editBox
-        
-        local actionBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-        actionBtn:SetSize(80, 22)
-        actionBtn:SetPoint("BOTTOM", f, "BOTTOM", 0, 12)
-        actionBtn:SetText("Close")
-        actionBtn:SetScript("OnClick", function() f:Hide() end)
+    if LURA.interactiveCopyBox then
+        LURA.interactiveCopyBox.targetText = fullMsg
+        LURA.interactiveCopyBox:SetText(fullMsg)
+        LURA.interactiveCopyBox:SetCursorPosition(0)
+        LURA.interactiveCopyBox:SetFocus()
+        LURA.interactiveCopyBox:HighlightText()
     end
-    
-    LUraCopyFrame.editBox:SetText(text)
-    LUraCopyFrame.editBox:HighlightText()
-    LUraCopyFrame:Show()
 end
