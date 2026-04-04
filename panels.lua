@@ -145,8 +145,19 @@ function LURA:ResetSequence()
         for i = 1, activeCount do
             msg = msg .. "." .. (i < activeCount and " " or "")
         end
-        local channel = tonumber(LURA.db.chatChannel) or 4
-        local fullMsg = "/" .. channel .. " " .. msg
+        
+        local ctype = LURA.db.chatType or "channel_numbered"
+        local prefix = "/4 "
+        if ctype == "say" then
+            prefix = "/say "
+        elseif ctype == "rw" then
+            prefix = "/rw "
+        else
+            local channel = tonumber(LURA.db.chatChannel) or 4
+            prefix = "/" .. channel .. " "
+        end
+        
+        local fullMsg = prefix .. msg
         
         LURA.interactiveCopyBox.targetText = fullMsg
         LURA.interactiveCopyBox:SetText(fullMsg)
@@ -511,8 +522,18 @@ function LURA:SendSequence()
         msg = msg .. symStr .. (i < #LURA.currentSequence and " " or "")
     end
     
-    local channel = tonumber(LURA.db.chatChannel) or 4
-    local fullMsg = "/" .. channel .. " " .. msg
+    local ctype = LURA.db.chatType or "channel_numbered"
+    local prefix = "/4 "
+    if ctype == "say" then
+        prefix = "/say "
+    elseif ctype == "rw" then
+        prefix = "/rw "
+    else
+        local channel = tonumber(LURA.db.chatChannel) or 4
+        prefix = "/" .. channel .. " "
+    end
+    
+    local fullMsg = prefix .. msg
     
     if LURA.interactiveCopyBox then
         LURA.interactiveCopyBox.targetText = fullMsg

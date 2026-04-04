@@ -21,18 +21,55 @@ function LURA:CreateChatPanel()
 
     local ListenerFrame = CreateFrame("Frame")
     ListenerFrame:RegisterEvent("CHAT_MSG_CHANNEL")
+    ListenerFrame:RegisterEvent("CHAT_MSG_SAY")
+    ListenerFrame:RegisterEvent("CHAT_MSG_RAID_WARNING")
+    ListenerFrame:RegisterEvent("CHAT_MSG_COMMUNITIES_CHANNEL")
 
     ListenerFrame:SetScript("OnEvent", function(self, event, ...)
-        if event == "CHAT_MSG_CHANNEL" then
-            local text = select(1, ...)
+        local ctype = LURA.db.chatType or "channel_numbered"
+        local text = select(1, ...)
+        
+        local shouldDisplay = false
+        if event == "CHAT_MSG_SAY" and ctype == "say" then
+            shouldDisplay = true
+        elseif event == "CHAT_MSG_RAID_WARNING" and ctype == "rw" then
+            shouldDisplay = true
+        elseif event == "CHAT_MSG_CHANNEL" or event == "CHAT_MSG_COMMUNITIES_CHANNEL" then
+            local channelName = select(4, ...)
             local channelNumber = select(8, ...)
-            local targetChannel = tonumber(LURA.db.chatChannel) or 4
+            local channelBaseName = select(9, ...)
             
-            if channelNumber == targetChannel then
-                pcall(function()
-                    MessageDisplay:SetText(text)
-                end)
+            if ctype == "channel_numbered" and event == "CHAT_MSG_CHANNEL" then
+                local targetChannel = tonumber(LURA.db.chatChannel) or 4
+                if channelNumber == targetChannel then
+                    shouldDisplay = true
+                end
+            elseif ctype == "channel_named" then
+                local rawTarget = LURA.db.chatChannelName or ""
+                local targetName = string.lower(rawTarget):match("^%s*(.-)%s*$")
+                if targetName ~= "" then
+                    -- Compare channelBaseName against cached Community:ClubID:StreamID
+                    -- (channelName/arg4 has a number prefix like "6. Community:...", 
+                    --  channelBaseName/arg9 has the clean identifier)
+                    if LURA.resolvedCommunityChannel 
+                       and channelBaseName == LURA.resolvedCommunityChannel then
+                        shouldDisplay = true
+                    -- Fallback: substring match on channelBaseName for non-guild communities
+                    elseif channelBaseName and type(channelBaseName) == "string" 
+                       and channelBaseName ~= "" then
+                        if string.find(string.lower(channelBaseName), targetName, 1, true) then
+                            shouldDisplay = true
+                        end
+                    end
+                end
+
             end
+        end
+        
+        if shouldDisplay then
+            pcall(function()
+                MessageDisplay:SetText(text)
+            end)
         end
     end)
     

@@ -102,8 +102,24 @@ function LURA:CreateOptionsPanel()
     end)
     LURA.showRLToolsBtn = showRLToolsBtn
 
-    local chatChannelLabel = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-    chatChannelLabel:SetPoint("TOPLEFT", showRLToolsBtn, "BOTTOMLEFT", 0, -12)
+    local chatTypeLabel = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    chatTypeLabel:SetPoint("TOPLEFT", showRLToolsBtn, "BOTTOMLEFT", 0, -12)
+    chatTypeLabel:SetText("Chat Output Type:")
+
+    local chatTypeDropdown = CreateFrame("Frame", "LUraChatTypeDropdown", panel, "UIDropDownMenuTemplate")
+    chatTypeDropdown:SetPoint("TOPLEFT", chatTypeLabel, "BOTTOMLEFT", -15, -4)
+    UIDropDownMenu_SetWidth(chatTypeDropdown, 160)
+    
+    local chatTypeNames = {
+        say = "Say (/say)",
+        rw = "Raid Warning (/rw)",
+        channel_numbered = "Custom Channel",
+        channel_named = "Community Channel"
+    }
+    local chatTypeOrder = {"say", "rw", "channel_numbered", "channel_named"}
+
+    local chatChannelLabel = panel:CreateFontString("LUraChatChannelLabel", "ARTWORK", "GameFontNormal")
+    chatChannelLabel:SetPoint("TOPLEFT", chatTypeDropdown, "BOTTOMLEFT", 15, -4)
     chatChannelLabel:SetText("Listen Channel Number:")
 
     local chatChannelEditBox = CreateFrame("EditBox", "LUraChatChannelEditBox", panel, "InputBoxTemplate")
@@ -125,18 +141,64 @@ function LURA:CreateOptionsPanel()
     end)
     LURA.chatChannelEditBox = chatChannelEditBox
 
-    -- TODO: Re-enable Test Mode once zone-based visibility is working
-    -- local testCheck = CreateFrame("CheckButton", "LUraTestCheck", panel, "UICheckButtonTemplate")
-    -- testCheck:SetPoint("TOPLEFT", hideBtn, "BOTTOMLEFT", 0, -8)
-    -- _G[testCheck:GetName().."Text"]:SetText("Test Mode (Force Display)")
-    -- testCheck:SetScript("OnClick", function(self)
-    --     LURA.testMode = self:GetChecked()
-    --     LURA:ApplyVisibility()
-    -- end)
-    -- LURA.testCheck = testCheck
+    local chatChannelNameLabel = panel:CreateFontString("LUraChatChannelNameLabel", "ARTWORK", "GameFontNormal")
+    chatChannelNameLabel:SetPoint("TOPLEFT", chatChannelLabel, "BOTTOMLEFT", 0, -12)
+    chatChannelNameLabel:SetText("Listen Channel Name:")
+
+    local chatChannelNameEditBox = CreateFrame("EditBox", "LUraChatChannelNameEditBox", panel, "InputBoxTemplate")
+    chatChannelNameEditBox:SetSize(100, 20)
+    chatChannelNameEditBox:SetPoint("LEFT", chatChannelNameLabel, "RIGHT", 10, 0)
+    chatChannelNameEditBox:SetAutoFocus(false)
+    chatChannelNameEditBox:SetScript("OnTextChanged", function(self, isUserInput)
+        if isUserInput then
+            LURA.db.chatChannelName = self:GetText()
+            LURA:ResolveCommunityChannel()
+        end
+    end)
+    LURA.chatChannelNameEditBox = chatChannelNameEditBox
+    
+    local function UpdateChatOptionsVisibility()
+        local ctype = LURA.db.chatType or "say"
+        if ctype == "channel_numbered" then
+            chatChannelLabel:Show()
+            chatChannelEditBox:Show()
+            chatChannelNameLabel:Hide()
+            chatChannelNameEditBox:Hide()
+        elseif ctype == "channel_named" then
+            chatChannelLabel:Show()
+            chatChannelEditBox:Show()
+            chatChannelNameLabel:Show()
+            chatChannelNameEditBox:Show()
+        else
+            chatChannelLabel:Hide()
+            chatChannelEditBox:Hide()
+            chatChannelNameLabel:Hide()
+            chatChannelNameEditBox:Hide()
+        end
+    end
+    LURA.UpdateChatOptionsVisibility = UpdateChatOptionsVisibility
+
+    UIDropDownMenu_Initialize(chatTypeDropdown, function(self, level, menuList)
+        for _, k in ipairs(chatTypeOrder) do
+            local info = UIDropDownMenu_CreateInfo()
+            info.text = chatTypeNames[k]
+            info.arg1 = k
+            info.func = function(self, arg1)
+                LURA.db.chatType = arg1
+                UIDropDownMenu_SetSelectedValue(chatTypeDropdown, arg1)
+                UIDropDownMenu_SetText(chatTypeDropdown, chatTypeNames[arg1])
+                UpdateChatOptionsVisibility()
+            end
+            info.checked = (LURA.db.chatType == k)
+            UIDropDownMenu_AddButton(info)
+        end
+    end)
+    UIDropDownMenu_SetSelectedValue(chatTypeDropdown, LURA.db.chatType or "say")
+    UIDropDownMenu_SetText(chatTypeDropdown, chatTypeNames[LURA.db.chatType or "say"])
+    LURA.chatTypeDropdown = chatTypeDropdown
 
     local profileTitle = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-    profileTitle:SetPoint("TOPLEFT", chatChannelLabel, "BOTTOMLEFT", 0, -20)
+    profileTitle:SetPoint("TOPLEFT", chatChannelNameLabel, "BOTTOMLEFT", 0, -20)
     profileTitle:SetText("Profile & Tools")
 
     -- Profile dropdown
@@ -212,6 +274,8 @@ function LURA:CreateOptionsPanel()
         LURA.db.hidden = false
         LURA.db.showRLTools = false
         LURA.db.chatChannel = 4
+        LURA.db.chatType = "say"
+        LURA.db.chatChannelName = ""
         LURA.db.summaryScale = 1.0
         LURA.db.interactiveScale = 1.0
         LURA.db.boxSpacing = 36
@@ -399,6 +463,23 @@ function LURA:UpdateOptionsPanel()
     if LURA.chatChannelEditBox then
         LURA.chatChannelEditBox:SetText(tostring(LURA.db.chatChannel or 4))
         LURA.chatChannelEditBox:SetCursorPosition(0)
+    end
+    if LURA.chatChannelNameEditBox then
+        LURA.chatChannelNameEditBox:SetText(LURA.db.chatChannelName or "")
+        LURA.chatChannelNameEditBox:SetCursorPosition(0)
+    end
+    if LURA.chatTypeDropdown then
+        local chatTypeNames = {
+            say = "Say (/say)",
+            rw = "Raid Warning (/rw)",
+            channel_numbered = "Custom Channel",
+            channel_named = "Community Channel"
+        }
+        UIDropDownMenu_SetSelectedValue(LURA.chatTypeDropdown, LURA.db.chatType or "say")
+        UIDropDownMenu_SetText(LURA.chatTypeDropdown, chatTypeNames[LURA.db.chatType or "say"])
+    end
+    if LURA.UpdateChatOptionsVisibility then
+        LURA.UpdateChatOptionsVisibility()
     end
     -- if LURA.testCheck then LURA.testCheck:SetChecked(LURA.testMode) end
     if LURA.profileDropdown then
