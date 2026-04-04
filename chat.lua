@@ -21,18 +21,39 @@ function LURA:CreateChatPanel()
 
     local ListenerFrame = CreateFrame("Frame")
     ListenerFrame:RegisterEvent("CHAT_MSG_CHANNEL")
+    ListenerFrame:RegisterEvent("CHAT_MSG_SAY")
+    ListenerFrame:RegisterEvent("CHAT_MSG_RAID_WARNING")
+    ListenerFrame:RegisterEvent("CHAT_MSG_COMMUNITIES_CHANNEL")
 
     ListenerFrame:SetScript("OnEvent", function(self, event, ...)
-        if event == "CHAT_MSG_CHANNEL" then
-            local text = select(1, ...)
-            local channelNumber = select(8, ...)
-            local targetChannel = tonumber(LURA.db.chatChannel) or 4
+        local ctype = LURA.db.chatType or "channel_numbered"
+        local text = select(1, ...)
+        
+        local shouldDisplay = false
+        if event == "CHAT_MSG_SAY" and ctype == "say" then
+            shouldDisplay = true
+        elseif event == "CHAT_MSG_RAID_WARNING" and ctype == "rw" then
+            shouldDisplay = true
+        elseif event == "CHAT_MSG_CHANNEL" or event == "CHAT_MSG_COMMUNITIES_CHANNEL" then
+            local _, _, _, channelName, _, _, _, channelNumber = ...
             
-            if channelNumber == targetChannel then
-                pcall(function()
-                    MessageDisplay:SetText(text)
-                end)
+            if ctype == "channel_numbered" and event == "CHAT_MSG_CHANNEL" then
+                local targetChannel = tonumber(LURA.db.chatChannel) or 4
+                if channelNumber == targetChannel then
+                    shouldDisplay = true
+                end
+            elseif ctype == "channel_named" then
+                local targetName = string.lower(LURA.db.chatChannelName or "")
+                if targetName ~= "" and channelName and string.find(string.lower(channelName), targetName, 1, true) then
+                    shouldDisplay = true
+                end
             end
+        end
+        
+        if shouldDisplay then
+            pcall(function()
+                MessageDisplay:SetText(text)
+            end)
         end
     end)
     

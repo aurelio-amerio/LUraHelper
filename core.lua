@@ -92,6 +92,8 @@ frame:SetScript("OnEvent", function(self, event, arg1)
                 hidden = false,
                 showRLTools = false,
                 chatChannel = 4,
+                chatType = "channel_numbered",
+                chatChannelName = "",
                 chatFontSize = 29,
                 boxSpacing = 36,
                 boxPadding = 6,
@@ -108,6 +110,8 @@ frame:SetScript("OnEvent", function(self, event, arg1)
         if profile.hidden == nil then profile.hidden = false end
         if profile.showRLTools == nil then profile.showRLTools = false end
         if profile.chatChannel == nil then profile.chatChannel = 4 end
+        if profile.chatType == nil then profile.chatType = "channel_numbered" end
+        if profile.chatChannelName == nil then profile.chatChannelName = "" end
         if profile.chatFontSize == nil then profile.chatFontSize = 29 end
         if profile.boxSpacing == nil then profile.boxSpacing = 36 end
         if profile.boxPadding == nil then profile.boxPadding = 6 end
