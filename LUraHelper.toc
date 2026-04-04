@@ -2,7 +2,7 @@
 ## Title: L'Ura Helper
 ## Notes: Track a sequence of 5 symbols against 5 target raid markers.
 ## Author: Deino
-## Version: 1.1.0
+## Version: 1.3.2
 ## SavedVariables: LUraHelperDB
 
 core.lua
