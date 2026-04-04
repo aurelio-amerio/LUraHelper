@@ -113,8 +113,8 @@ function LURA:CreateOptionsPanel()
     local chatTypeNames = {
         say = "Say (/say)",
         rw = "Raid Warning (/rw)",
-        channel_numbered = "Custom Channel (Number)",
-        channel_named = "Guild Custom Channel (Name)"
+        channel_numbered = "Custom Channel",
+        channel_named = "Community Channel"
     }
     local chatTypeOrder = {"say", "rw", "channel_numbered", "channel_named"}
 
@@ -152,12 +152,13 @@ function LURA:CreateOptionsPanel()
     chatChannelNameEditBox:SetScript("OnTextChanged", function(self, isUserInput)
         if isUserInput then
             LURA.db.chatChannelName = self:GetText()
+            LURA:ResolveCommunityChannel()
         end
     end)
     LURA.chatChannelNameEditBox = chatChannelNameEditBox
     
     local function UpdateChatOptionsVisibility()
-        local ctype = LURA.db.chatType or "channel_numbered"
+        local ctype = LURA.db.chatType or "say"
         if ctype == "channel_numbered" then
             chatChannelLabel:Show()
             chatChannelEditBox:Show()
@@ -192,8 +193,8 @@ function LURA:CreateOptionsPanel()
             UIDropDownMenu_AddButton(info)
         end
     end)
-    UIDropDownMenu_SetSelectedValue(chatTypeDropdown, LURA.db.chatType or "channel_numbered")
-    UIDropDownMenu_SetText(chatTypeDropdown, chatTypeNames[LURA.db.chatType or "channel_numbered"])
+    UIDropDownMenu_SetSelectedValue(chatTypeDropdown, LURA.db.chatType or "say")
+    UIDropDownMenu_SetText(chatTypeDropdown, chatTypeNames[LURA.db.chatType or "say"])
     LURA.chatTypeDropdown = chatTypeDropdown
 
     local profileTitle = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
@@ -273,7 +274,7 @@ function LURA:CreateOptionsPanel()
         LURA.db.hidden = false
         LURA.db.showRLTools = false
         LURA.db.chatChannel = 4
-        LURA.db.chatType = "channel_numbered"
+        LURA.db.chatType = "say"
         LURA.db.chatChannelName = ""
         LURA.db.summaryScale = 1.0
         LURA.db.interactiveScale = 1.0
@@ -472,10 +473,10 @@ function LURA:UpdateOptionsPanel()
             say = "Say (/say)",
             rw = "Raid Warning (/rw)",
             channel_numbered = "Custom Channel (Number)",
-            channel_named = "Guild Custom Channel (Name)"
+            channel_named = "Community Channel (Name)"
         }
-        UIDropDownMenu_SetSelectedValue(LURA.chatTypeDropdown, LURA.db.chatType or "channel_numbered")
-        UIDropDownMenu_SetText(LURA.chatTypeDropdown, chatTypeNames[LURA.db.chatType or "channel_numbered"])
+        UIDropDownMenu_SetSelectedValue(LURA.chatTypeDropdown, LURA.db.chatType or "say")
+        UIDropDownMenu_SetText(LURA.chatTypeDropdown, chatTypeNames[LURA.db.chatType or "say"])
     end
     if LURA.UpdateChatOptionsVisibility then
         LURA.UpdateChatOptionsVisibility()

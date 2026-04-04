@@ -6,17 +6,36 @@ A World of Warcraft addon for tracking symbol sequences against raid markers dur
 
 ## Setup
 
-1. Create a custom chat channel, for example by typing: `/channel myraidchannel123`
-2. Ensure the entire raid joins this custom channel.
-3. Take note of the chat channel number (this might be different for each person).
-4. Open the settings with `/lura` and type the chat channel number. This is the channel the addon will monitor for sequences.
-5. **Raid Assistants/Leaders:** Make sure to check "Show Raid Assist tools" in the options, as the interactive panel is hidden by default. Only assistants need the interactive panel to broadcast the order.
-6. *(Optional)* Move the panels to your preferred position, lock them so you don't accidentally move them, and save your profile with a new name.
-7. *(Optional)* Change the order of the raid markers or disable unneeded ones. For example, on Normal difficulty, you only need 3 raid markers.
+We provide two setup options: an **Easy Mode Setup** and an **Advanced Setup** for guild groups.
+
+### Easy Mode Setup
+
+1. Open the settings with `/lura`.
+2. Set the channel mode to **Raid Warning**. 
+   * *Pros:* Only the assistants can send raid warnings, and the messages will be correctly displayed.
+   * *Cons:* If you send any kind of other raid warning message during the encounter, this will appear in the addon window, causing potential confusion.
+3. *Alternative:* It is also possible to set the mode to **Say** as a fallback, but you need to make sure nothing else is writing to `/say` during a pull.
+4. **Raid Assistants/Leaders:** Make sure to check "Show Raid Assist tools" in the options, as the interactive panel is hidden by default. Only assistants need the interactive panel to broadcast the order.
+5. *(Optional)* Move the panels to your preferred position, lock them so you don't accidentally move them, and save your profile with a new name.
+6. *(Optional)* Change the order of the raid markers or disable unneeded ones. For example, on Normal difficulty, you only need 3 raid markers.
+
+### Advanced Setup (Community Channels)
+
+*Note: This setup works with both guild channels and any general community channels, as long as you add them as "general" chat channels (i.e., you can send messages to them by typing `/<number>`, such as `/7`, where `7` is the chat channel number, see the screenshot below).*
+
+<img src="https://raw.githubusercontent.com/aurelio-amerio/LUraHelper/refs/heads/main/imgs/add-channel.jpg" alt="Chat Channel Setup" width=600>
+
+1. You need to create a community channel (for example `"raid2"`).
+2. Every raider needs to have access to that channel.
+3. Every raider needs to add the channel as a chat channel (see screenshot above).
+4. You need to take note of the chat channel number and the name (for example, channel `7` and `raid2`).
+5. Make sure people can read and send messages to this channel.
+6. In the `/lura` config panel, select the option **Community Channel**, and fill the number and channel name fields. While the channel name will be the same for each player, the channel number might change depending on the channels players are in.
+7. Complete steps 4-6 from the Easy Mode setup to arrange your UI.
 
 ## Usage
 
-* **Raiders:** No action during combat is required! Just make sure you joined the correct chat channel and entered its number in the configuration panel (`/lura`).
+* **Raiders:** No action during combat is required! Just make sure you configured your channel appropriately as described in the Setup section.
 * **Raid Assistant:** 
   1. Click the symbols on the interactive panel as they appear over L'Ura's head.
   2. Once the sequence is filled, click the **Send to chat** button. This creates a pre-computed chat message in a copy-paste window.
@@ -28,7 +47,7 @@ A World of Warcraft addon for tracking symbol sequences against raid markers dur
 
 ## Installation
 
-1. Install the addon from Wago, or copy the `LUraHelper` folder into your WoW `Interface/AddOns/` directory.
+1. Install the addon from [Wago](https://addons.wago.io/addons/lurahelper), or copy the `LUraHelper` folder into your WoW `Interface/AddOns/` directory.
 2. Restart WoW (to load the addon fonts) or type `/reload` in chat (if you have already installed the addon previously).
 
 ## Slash Commands

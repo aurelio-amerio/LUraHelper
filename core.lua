@@ -28,10 +28,40 @@ LURA.MARKER_NAMES = {
     "Star", "Circle", "Diamond", "Triangle", "Moon", "Square", "Cross", "Skull", "None"
 }
 
+-- Resolve a community channel name to its "Community:ClubID:StreamID" identifier.
+-- Called at init and whenever chatChannelName changes.
+-- Scans all subscribed clubs (including guild) for a stream matching the name.
+function LURA:ResolveCommunityChannel()
+    LURA.resolvedCommunityChannel = nil
+
+    local targetName = LURA.db and LURA.db.chatChannelName or ""
+    targetName = string.lower(targetName):match("^%s*(.-)%s*$")
+    if targetName == "" then return end
+
+    -- C_Club may not be available yet
+    if not C_Club or not C_Club.GetSubscribedClubs then return end
+
+    local clubs = C_Club.GetSubscribedClubs()
+    if not clubs then return end
+
+    for _, club in ipairs(clubs) do
+        local streams = C_Club.GetStreams(club.clubId)
+        if streams then
+            for _, stream in ipairs(streams) do
+                if stream.name and string.lower(stream.name) == targetName then
+                    LURA.resolvedCommunityChannel = "Community:" .. club.clubId .. ":" .. stream.streamId
+                    return
+                end
+            end
+        end
+    end
+end
+
 -- Event Handling & Initialization
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("ADDON_LOADED")
 frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+frame:RegisterEvent("CLUB_STREAMS_LOADED")
 -- Listen on multiple channels as fallback (Midnight combat restrictions)
 frame:RegisterEvent("CHAT_MSG_RAID_WARNING")
 frame:RegisterEvent("CHAT_MSG_RAID")
@@ -40,10 +70,8 @@ frame:RegisterEvent("CHAT_MSG_INSTANCE_CHAT")
 frame:RegisterEvent("CHAT_MSG_INSTANCE_CHAT_LEADER")
 frame:RegisterEvent("CHAT_MSG_SAY")
 frame:RegisterEvent("CHAT_MSG_YELL")
--- TODO: Re-enable zone-based visibility once encounter detection is working
--- frame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
--- frame:RegisterEvent("ENCOUNTER_START")
--- frame:RegisterEvent("ENCOUNTER_END")
+frame:RegisterEvent("CHAT_MSG_CHANNEL")
+frame:RegisterEvent("CHAT_MSG_COMMUNITIES_CHANNEL")
 
 -- Chat events that carry "L'Ura Order:" messages
 local CHAT_EVENTS = {
@@ -54,6 +82,8 @@ local CHAT_EVENTS = {
     CHAT_MSG_INSTANCE_CHAT_LEADER = true,
     CHAT_MSG_SAY = true,
     CHAT_MSG_YELL = true,
+    CHAT_MSG_CHANNEL = true,
+    CHAT_MSG_COMMUNITIES_CHANNEL = true,
 }
 
 frame:SetScript("OnEvent", function(self, event, arg1)
@@ -92,7 +122,7 @@ frame:SetScript("OnEvent", function(self, event, arg1)
                 hidden = false,
                 showRLTools = false,
                 chatChannel = 4,
-                chatType = "channel_numbered",
+                chatType = "say",
                 chatChannelName = "",
                 chatFontSize = 29,
                 boxSpacing = 36,
@@ -110,7 +140,7 @@ frame:SetScript("OnEvent", function(self, event, arg1)
         if profile.hidden == nil then profile.hidden = false end
         if profile.showRLTools == nil then profile.showRLTools = false end
         if profile.chatChannel == nil then profile.chatChannel = 4 end
-        if profile.chatType == nil then profile.chatType = "channel_numbered" end
+        if profile.chatType == nil then profile.chatType = "say" end
         if profile.chatChannelName == nil then profile.chatChannelName = "" end
         if profile.chatFontSize == nil then profile.chatFontSize = 29 end
         if profile.boxSpacing == nil then profile.boxSpacing = 36 end
@@ -133,9 +163,16 @@ frame:SetScript("OnEvent", function(self, event, arg1)
         LURA:ApplyVisibility()
         LURA:ApplyLockState()
         LURA:ApplyScale()
+        LURA:ResolveCommunityChannel()
     elseif event == "PLAYER_ENTERING_WORLD" then
         if LURA.db then
             LURA:ApplyVisibility()
+            LURA:ResolveCommunityChannel()
+        end
+    elseif event == "CLUB_STREAMS_LOADED" then
+        -- Club/stream data may not be ready at ADDON_LOADED; retry here
+        if LURA.db and not LURA.resolvedCommunityChannel then
+            LURA:ResolveCommunityChannel()
         end
     elseif CHAT_EVENTS[event] then
         if type(arg1) == "string" and arg1:match("^L'Ura Order:") then
