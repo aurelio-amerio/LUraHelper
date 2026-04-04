@@ -472,8 +472,8 @@ function LURA:UpdateOptionsPanel()
         local chatTypeNames = {
             say = "Say (/say)",
             rw = "Raid Warning (/rw)",
-            channel_numbered = "Custom Channel (Number)",
-            channel_named = "Community Channel (Name)"
+            channel_numbered = "Custom Channel",
+            channel_named = "Community Channel"
         }
         UIDropDownMenu_SetSelectedValue(LURA.chatTypeDropdown, LURA.db.chatType or "say")
         UIDropDownMenu_SetText(LURA.chatTypeDropdown, chatTypeNames[LURA.db.chatType or "say"])
